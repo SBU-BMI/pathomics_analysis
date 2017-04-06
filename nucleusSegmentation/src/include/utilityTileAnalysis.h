@@ -552,7 +552,9 @@ namespace ImagenomicAnalytics
         //outputLabelImageUShort = connected->GetOutput();
         //std::cout << "after ConnectedComponent\n" << std::flush;
 
-        return fhfilter1->GetOutput();
+	// return nucleusBinaryMask;
+	    
+      return fhfilter1->GetOutput();
     }
 
 
