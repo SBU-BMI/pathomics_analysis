@@ -1,9 +1,11 @@
 #!/bin/bash
 
-# Build image from dockerfile
-docker build -t sbubmi/test_segmentation .
+image_name="sbubmi/test_segmentation"
+container_name="$USER-test_segmentation"
 
-# Start container from image
-docker_image="sbubmi/test_segmentation"
-docker_name="$USER-test_segmentation"
-python ../script/run_docker_segment.py start $docker_name $docker_image
+# Build image from dockerfile
+docker build -t "$image_name" .
+
+# Start container
+python ../script/run_docker_segment.py start $container_name $image_name
+
