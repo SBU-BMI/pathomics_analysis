@@ -1,5 +1,5 @@
 /*
- * ScanlineOperations.h
+ * PixelOperations.h
  *
  *  Created on: Aug 2, 2011
  *      Author: tcpan
