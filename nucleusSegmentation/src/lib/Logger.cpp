@@ -1,5 +1,5 @@
 /*
- * Logger.h
+ * Logger.cpp
  *
  *  Created on: Jul 15, 2011
  *      Author: tcpan
