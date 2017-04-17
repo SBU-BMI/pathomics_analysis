@@ -19,8 +19,8 @@ echo ""
 cd ../..
 docker build -t "$image_name" . || error_exit "Could not build container."
 
-echo "Quick nap... 5 4 3 2 1"
-sleep 5
+echo "Quick nap... 3 2 1"
+sleep 3
 
 # Start container
 echo ""
