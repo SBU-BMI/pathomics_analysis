@@ -121,30 +121,16 @@ int main(int argc, char **argv) {
     //cv::Mat outputLabelImageMat;
     //cv::Mat seg = processTile(thisTile, nucleusBinaryMask, outputLabelImage, outputLabelImageMat, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel);
 
-    /*
+    itkUCharImageType::Pointer nucleusBinaryMask;
     // processTile 1
-    itkUCharImageType::Pointer nucleusBinaryMask = ImagenomicAnalytics::TileAnalysis::processTile<char>(thisTile,
-                                                                                                        outputLabelImage, \
-                                                                                                        otsuRatio,
-                                                                                                        curvatureWeight, \
-                                                                                                        sizeThld,
-                                                                                                        sizeUpperThld, \
-                                                                                                        mpp, msKernel, \
-                                                                                                        levelsetNumberOfIteration);
-    */
+    //nucleusBinaryMask = ImagenomicAnalytics::TileAnalysis::processTile<char>(thisTile, outputLabelImage, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel, levelsetNumberOfIteration);
 
     // processTile new
-    int declumpingType = 0;
-    itkUCharImageType::Pointer nucleusBinaryMask = processTileDeclumpType(thisTile, \
-                                           outputLabelImage, \
-                                           otsuRatio, \
-                                           curvatureWeight, \
-                                           sizeThld, \
-                                           sizeUpperThld, \
-                                           mpp, \
-                                           msKernel, \
-                                           levelsetNumberOfIteration, \
-                                           declumpingType);
+    int declumpingType;
+    //declumpingType = 0; // no declumping
+    //declumpingType = 1; // mean shift
+    declumpingType = 2; // watershed
+    nucleusBinaryMask = processTileDeclumpType(thisTile, outputLabelImage, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel, levelsetNumberOfIteration, declumpingType);
 
     // cv::Mat seg = ImagenomicAnalytics::TileAnalysis::processTileCV(thisTile, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel);
     // imwrite("cv_mask.png",seg);
