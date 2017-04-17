@@ -42,7 +42,7 @@ test2()
   docker cp $input_file $container_name:$input_dir
   # Using Docker to run mainSegmentSmallImage
   docker exec -d $container_name mainSegmentSmallImage $input_dir/$input_file "$output_dir/output"
-  docker cp $container_name:$output_dir/output_label.png .
+  docker cp $containerId:$output_dir/output_label.png .
 }
 
 #test1
