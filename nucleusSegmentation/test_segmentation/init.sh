@@ -17,7 +17,13 @@ image_name="sbubmi/test_segmentation"
 container_name="$USER-test_segmentation"
 
 # Build image from dockerfile
+echo ""
+echo "BUILDING DOCKER IMAGE"
+echo ""
 docker build -t "$image_name" . || error_exit "Could not build container."
 
 # Start container
+echo ""
+echo "STARTING CONTAINER"
+echo ""
 python ../script/run_docker_segment.py start $container_name $image_name
