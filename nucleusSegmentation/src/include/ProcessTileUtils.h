@@ -237,7 +237,6 @@ itkUCharImageType::Pointer processTileDeclumpType(cv::Mat thisTileCV, \
  * 1 = Yi's Mean Shift
  * 2 = Jun's Watershed
  */
-template<typename TNull>
 cv::Mat processTileCVDeclumpType(cv::Mat thisTileCV, \
                           float otsuRatio = 1.0, \
                           double curvatureWeight = 0.8, \
@@ -260,7 +259,7 @@ cv::Mat processTileCVDeclumpType(cv::Mat thisTileCV, \
                                                                        mpp, \
                                                                        msKernel, \
                                                                        levelsetNumberOfIteration,
-                                                                                declumpingType);
+                                                                       declumpingType);
 
     // Transform from 1 to 255 does not work in our Slicer use-case.
 
