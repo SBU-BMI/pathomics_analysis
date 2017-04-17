@@ -1,9 +1,5 @@
 #!/bin/bash
 
-#
-# Run this program from the directory where the Dockerfile is located.
-#
-
 # Program name
 PROGNAME=$(basename "$0")
 
@@ -20,6 +16,7 @@ container_name="$USER-test_segmentation"
 echo ""
 echo "BUILDING DOCKER IMAGE"
 echo ""
+cd ../..
 docker build -t "$image_name" . || error_exit "Could not build container."
 
 echo "Quick nap... 5 4 3 2 1"
@@ -29,4 +26,4 @@ sleep 5
 echo ""
 echo "STARTING CONTAINER"
 echo ""
-python ../script/run_docker_segment.py start $container_name $image_name
+python nucleusSegmentation/script/run_docker_segment.py start $container_name $image_name
