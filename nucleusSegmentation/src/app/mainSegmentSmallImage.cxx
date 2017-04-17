@@ -117,26 +117,29 @@ int main(int argc, char **argv) {
     cv::Mat thisTile = imread(fileName);
 
     //itkUCharImageType::Pointer nucleusBinaryMask = itkUCharImageType::New();
-    itkUShortImageType::Pointer outputLabelImage = itkUShortImageType::New();
+
     //cv::Mat outputLabelImageMat;
     //cv::Mat seg = processTile(thisTile, nucleusBinaryMask, outputLabelImage, outputLabelImageMat, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel);
 
-    itkUCharImageType::Pointer nucleusBinaryMask;
+    std::string outputLabelName = outputPrefix.append("_label.png");
+
     // processTile 1
+    //itkUCharImageType::Pointer nucleusBinaryMask;
+    //itkUShortImageType::Pointer outputLabelImage = itkUShortImageType::New();
     //nucleusBinaryMask = ImagenomicAnalytics::TileAnalysis::processTile<char>(thisTile, outputLabelImage, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel, levelsetNumberOfIteration);
+
+    //ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, outputLabelName.c_str(), 0);
 
     // processTile new
     int declumpingType;
     //declumpingType = 0; // no declumping
     //declumpingType = 1; // mean shift
     declumpingType = 2; // watershed
-    nucleusBinaryMask = processTileDeclumpType(thisTile, outputLabelImage, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel, levelsetNumberOfIteration, declumpingType);
+    cv::Mat seg = processTileCVDeclumpType(thisTile, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel, levelsetNumberOfIteration, declumpingType);
+    imwrite(outputLabelName.c_str(), seg);
 
     // cv::Mat seg = ImagenomicAnalytics::TileAnalysis::processTileCV(thisTile, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel);
     // imwrite("cv_mask.png",seg);
-
-    std::string outputLabelName = outputPrefix.append("_label.png");
-    ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, outputLabelName.c_str(), 0);
 
     //imwrite(outputLabelName, seg);
 
