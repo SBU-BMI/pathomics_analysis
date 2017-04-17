@@ -4,7 +4,7 @@
 # Assuming same container name as set in init.sh
 #
 container_name="$USER-test_segmentation"
-input_file="TCGA-CS-4938-01Z-00-DX1_12560_47520_500_500_LGG.png"
+input_file="TCGA-41-3393-01Z-00-DX1_18300_68910_600_600_GBM.png"
 
 # Segment image
 test1()
