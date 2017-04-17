@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#
+# Assuming same container name as set in init.sh
+#
 container_name="$USER-test_segmentation"
 exec_id="20170412133151"
 input_file="TCGA-CS-4938-01Z-00-DX1_12560_47520_500_500_LGG.png"
@@ -10,6 +13,7 @@ output_dir="/tmp/output"
 # Segment image
 test1()
 {
+  # Using Python script to run mainSegmentFeatures
   python ../script/run_docker_segment.py \
   segment \
   $container_name \
@@ -32,6 +36,7 @@ test2()
   docker exec $container_name mkdir -p $output_dir
   input_file="TCGA-CS-4938-01Z-00-DX1_12560_47520_500_500_LGG.png"
   docker cp $input_file $container_name:$input_dir
+  # Using Docker to run mainSegmentSmallImage
   docker exec $container_name mainSegmentSmallImage $input_dir/$input_file "$output_dir/output"
   docker cp $container_name:$output_dir/output_label.png .
   docker cp $container_name:$output_dir/processTestDeclump_label.png .
