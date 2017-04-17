@@ -57,32 +57,6 @@ if (HAVE_GLIB)
             )
 endif (HAVE_GLIB)
 
-################################################################################
-# Include external project nscale
-include(ExternalProject)
-
-ExternalProject_Add(nscale-proj
-        DOWNLOAD_DIR nscale
-        GIT_REPOSITORY https://github.com/SBU-BMI/nscale.git
-        SOURCE_DIR nscale
-        CMAKE_ARGS -DOpenCV_DIR=${OpenCV_DIR}
-        INSTALL_COMMAND ""
-        )
-
-set(nscalesrcdir ${CMAKE_BINARY_DIR}/app/nscale/src)
-set(nscalebuilddir ${CMAKE_BINARY_DIR}/app/nscale-proj-prefix/src/nscale-proj-build)
-
-#includes
-include_directories(${nscalesrcdir}/segment)
-include_directories(${nscalesrcdir}/segment/cuda)
-include_directories(${nscalesrcdir}/common)
-include_directories(${nscalesrcdir}/features)
-include_directories(${nscalesrcdir}/normalization)
-include_directories(${CMAKE_SOURCE_DIR}/lib/ConvertFunctions)
-
-link_directories(${nscalebuilddir}/lib)
-
-
 option(build_mainTileAndSegmentWSINucleiOutputFeature "build mainTileAndSegmentWSINucleiOutputFeature?" ON)
 
 ################################################################################
