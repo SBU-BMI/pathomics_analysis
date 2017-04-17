@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
 
     // processTile new
     int declumpingType = 0;
-    itkUCharImageType::Pointer nucleusBinaryMask = processTileDeclumpType<char>(thisTile, \
+    itkUCharImageType::Pointer nucleusBinaryMask = processTileDeclumpType(thisTile, \
                                            outputLabelImage, \
                                            otsuRatio, \
                                            curvatureWeight, \
