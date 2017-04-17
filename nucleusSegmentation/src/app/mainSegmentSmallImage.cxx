@@ -41,15 +41,14 @@ itkUCharImageType::Pointer processTest(cv::Mat thisTile, \
                          float sizeUpperThld = 200, \
                          double mpp = 0.25, \
                          float msKernel = 20.0, \
-                         int levelsetNumberOfIteration = 100, std::string outputPrefix) {
+                         int levelsetNumberOfIteration = 100, std::string outputPrefix = "abc") {
     itkUCharImageType::Pointer nucleusBinaryMask = ImagenomicAnalytics::TileAnalysis::processTile<char>(thisTile,
                                                                                                         outputLabelImage, \
-                                                                                                      otsuRatio,
+                                                                                                        otsuRatio,
                                                                                                         curvatureWeight, \
-                                                                                                      sizeThld,
+                                                                                                        sizeThld,
                                                                                                         sizeUpperThld, \
-                                                                                                      mpp, msKernel, \
-
+                                                                                                        mpp, msKernel, \
                                                                                                         levelsetNumberOfIteration);
     std::string outputLabelName = outputPrefix.append("_label.png");
     ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, outputLabelName.c_str(), 0);
