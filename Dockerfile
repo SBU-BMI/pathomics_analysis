@@ -21,3 +21,6 @@ RUN cp app/main* /usr/local/bin/.
 # Copy script
 RUN cp ../script/mainAggregateFeatures.py  /usr/local/bin/.
 
+WORKDIR /tmp
+
+CMD ["/bin/bash"]
