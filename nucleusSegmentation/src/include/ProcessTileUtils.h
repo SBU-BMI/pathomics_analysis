@@ -237,6 +237,7 @@ itkUCharImageType::Pointer processTileDeclumpType(cv::Mat thisTileCV, \
  * 1 = Yi's Mean Shift
  * 2 = Jun's Watershed
  */
+template<typename TNull>
 cv::Mat processTileCVDeclumpType(cv::Mat thisTileCV, \
                           float otsuRatio = 1.0, \
                           double curvatureWeight = 0.8, \
@@ -245,7 +246,7 @@ cv::Mat processTileCVDeclumpType(cv::Mat thisTileCV, \
                           double mpp = 0.25, \
                           float msKernel = 20.0, \
                           int levelsetNumberOfIteration = 100,
-                                 int declumpingType = 0) {
+                          int declumpingType = 0) {
 
     itkUShortImageType::Pointer outputLabelImage;
 
