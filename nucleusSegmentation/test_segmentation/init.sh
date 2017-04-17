@@ -1,5 +1,9 @@
 #!/bin/bash
 
+#
+# Run this program from the directory where the Dockerfile is located.
+#
+
 # Program name
 PROGNAME=$(basename "$0")
 
