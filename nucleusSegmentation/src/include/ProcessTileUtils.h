@@ -77,8 +77,9 @@ itkUCharImageType::Pointer processTileDeclumpType(cv::Mat thisTileCV, \
 
     std::cout << "ThresholdImage.....\n" << std::flush;
 
-    itkUCharImageType::Pointer nucleusBinaryMask = ImagenomicAnalytics::ScalarImage::otsuThresholdImage<char>(hemaFloat, maskValue,
-                                                                                         otsuRatio);
+    itkUCharImageType::Pointer nucleusBinaryMask = ImagenomicAnalytics::ScalarImage::otsuThresholdImage<char>(hemaFloat,
+                                                                                                              maskValue,
+                                                                                                              otsuRatio);
 
     long numPixels = nucleusBinaryMask->GetLargestPossibleRegion().GetNumberOfPixels();
 
@@ -159,8 +160,9 @@ itkUCharImageType::Pointer processTileDeclumpType(cv::Mat thisTileCV, \
                 cv::Mat watershedMask;
                 cv::Mat seg = itk::OpenCVImageBridge::ITKImageToCVMat<itkUCharImageType>(nucleusBinaryMask);
 
-                // TODO:
-                //nscale::HistologicalEntities::plSeparateNuclei(newImgCV, seg, watershedMask);
+                // (img, seg, mask, int minSizePl=30, int watershedConnectivity=8,
+                // ::cciutils::SimpleCSVLogger *logger = NULL, ::cciutils::cv::IntermediateResultHandler *iresHandler = NULL);
+                nscale::HistologicalEntities::plSeparateNuclei(newImgCV, seg, watershedMask, 30, 8, NULL, NULL);
 
                 nucleusBinaryMask = itk::OpenCVImageBridge::CVMatToITKImage<itkUCharImageType>(watershedMask);
 
@@ -243,7 +245,7 @@ cv::Mat processTileCVDeclumpType(cv::Mat thisTileCV, \
                           double mpp = 0.25, \
                           float msKernel = 20.0, \
                           int levelsetNumberOfIteration = 100,
-                       int declumpingType = 0) {
+                                 int declumpingType = 0) {
 
     itkUShortImageType::Pointer outputLabelImage;
 
@@ -257,7 +259,7 @@ cv::Mat processTileCVDeclumpType(cv::Mat thisTileCV, \
                                                                        mpp, \
                                                                        msKernel, \
                                                                        levelsetNumberOfIteration,
-                                                                      declumpingType);
+                                                                                declumpingType);
 
     // Transform from 1 to 255 does not work in our Slicer use-case.
 
