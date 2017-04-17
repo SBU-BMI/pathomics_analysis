@@ -29,61 +29,12 @@
 #include "utilityTileAnalysis.h"
 #include "utilityIO.h"
 
-#include "HistologicalEntities.h"
 #include "ProcessTileUtils.h"
 
-template<typename TNull>
-itkUCharImageType::Pointer processTest(cv::Mat thisTile, \
-                         itkUShortImageType::Pointer &outputLabelImage, \
-                         float otsuRatio = 1.0, \
-                         double curvatureWeight = 0.8, \
-                         float sizeThld = 3, \
-                         float sizeUpperThld = 200, \
-                         double mpp = 0.25, \
-                         float msKernel = 20.0, \
-                         int levelsetNumberOfIteration = 100, std::string outputPrefix = "abc") {
-    itkUCharImageType::Pointer nucleusBinaryMask = ImagenomicAnalytics::TileAnalysis::processTile<char>(thisTile,
-                                                                                                        outputLabelImage, \
-                                                                                                        otsuRatio,
-                                                                                                        curvatureWeight, \
-                                                                                                        sizeThld,
-                                                                                                        sizeUpperThld, \
-                                                                                                        mpp, msKernel, \
-                                                                                                        levelsetNumberOfIteration);
-    std::string outputLabelName = outputPrefix.append("_label.png");
-    ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, outputLabelName.c_str(), 0);
-}
-
-template<typename TNull>
-itkUCharImageType::Pointer processTestDeclump(cv::Mat thisTile, \
-                         itkUShortImageType::Pointer &outputLabelImage, \
-                         float otsuRatio = 1.0, \
-                         double curvatureWeight = 0.8, \
-                         float sizeThld = 3, \
-                         float sizeUpperThld = 200, \
-                         double mpp = 0.25, \
-                         float msKernel = 20.0, \
-                         int levelsetNumberOfIteration = 100, \
-                         int declumpingType = 0) {
-
-    itkUCharImageType::Pointer nucleusBinaryMask = processTileDeclumpType<char>(thisTile, \
-                                           outputLabelImage, \
-                                           otsuRatio, \
-                                           curvatureWeight, \
-                                           sizeThld, \
-                                           sizeUpperThld, \
-                                           mpp, \
-                                           msKernel, \
-                                           levelsetNumberOfIteration, \
-                                           declumpingType);
-
-    std::string outputPrefix("processTestDeclump_label.png");
-    ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, outputPrefix.c_str(), 0);
-}
 
 int main(int argc, char **argv) {
     if (argc < 3) {
-        std::cerr << "Parameters: imageName outputPrefix\n";
+        std::cerr << "Parameters: imageName outputPrefix mpp\n";
         exit(-1);
     }
 
@@ -114,7 +65,6 @@ int main(int argc, char **argv) {
 
     /*--------------------------------------------------------------------------------
       Higher value will cause smoother nuclear boundary.
-
       range: [0, 1]
       --------------------------------------------------------------------------------*/
     double curvatureWeight = 0.8;
@@ -126,7 +76,6 @@ int main(int argc, char **argv) {
     /*--------------------------------------------------------------------------------
       nucleus smaller than this value will be regarded as noise and
       removed.
-
       range > 0 [1,20]
       --------------------------------------------------------------------------------*/
     float sizeThld = 3;
@@ -138,7 +87,6 @@ int main(int argc, char **argv) {
     /*--------------------------------------------------------------------------------
       region larger than this value will be regarded as clump and
       de-clumped.
-
       range > 0 [50, 400,]
       --------------------------------------------------------------------------------*/
     float sizeUpperThld = 200;
@@ -173,24 +121,39 @@ int main(int argc, char **argv) {
     //cv::Mat outputLabelImageMat;
     //cv::Mat seg = processTile(thisTile, nucleusBinaryMask, outputLabelImage, outputLabelImageMat, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel);
 
-    processTest<char>(thisTile, outputLabelImage, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel,
-                      levelsetNumberOfIteration, outputPrefix);
+    /*
+    // processTile 1
+    itkUCharImageType::Pointer nucleusBinaryMask = ImagenomicAnalytics::TileAnalysis::processTile<char>(thisTile,
+                                                                                                        outputLabelImage, \
+                                                                                                        otsuRatio,
+                                                                                                        curvatureWeight, \
+                                                                                                        sizeThld,
+                                                                                                        sizeUpperThld, \
+                                                                                                        mpp, msKernel, \
+                                                                                                        levelsetNumberOfIteration);
+    */
 
-
-    int declumpingType = 2;
-    processTestDeclump<char>(thisTile, outputLabelImage, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp,
-                             msKernel, levelsetNumberOfIteration, declumpingType);
+    // processTile new
+    int declumpingType = 0;
+    itkUCharImageType::Pointer nucleusBinaryMask = processTileDeclumpType<char>(thisTile, \
+                                           outputLabelImage, \
+                                           otsuRatio, \
+                                           curvatureWeight, \
+                                           sizeThld, \
+                                           sizeUpperThld, \
+                                           mpp, \
+                                           msKernel, \
+                                           levelsetNumberOfIteration, \
+                                           declumpingType);
 
     // cv::Mat seg = ImagenomicAnalytics::TileAnalysis::processTileCV(thisTile, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel);
     // imwrite("cv_mask.png",seg);
 
-    ////std::string outputLabelName = outputPrefix.append("_label.png");
-    ////ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, outputLabelName.c_str(), 0);
+    std::string outputLabelName = outputPrefix.append("_label.png");
+    ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, outputLabelName.c_str(), 0);
 
     //imwrite(outputLabelName, seg);
 
 
     return 0;
 }
-
-
