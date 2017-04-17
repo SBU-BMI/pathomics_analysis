@@ -43,7 +43,6 @@ test2()
   # Using Docker to run mainSegmentSmallImage
   docker exec -d $container_name mainSegmentSmallImage $input_dir/$input_file "$output_dir/output"
   docker cp $container_name:$output_dir/output_label.png .
-  docker cp $container_name:$output_dir/processTestDeclump_label.png .
 }
 
 #test1
