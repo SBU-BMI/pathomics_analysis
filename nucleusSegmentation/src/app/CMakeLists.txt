@@ -13,8 +13,9 @@ endforeach ()
 #####################################################################
 # Link with NScale
 SET(list2 "mainSegmentSmallImage" "mainSegmentFeatures" "computeFeatures" "computeFeaturesCombined")
-option(build_${item} "build ${item}?" ON)
 foreach (item ${list2})
+    # message(STATUS "arg='${item}'")
+    option(build_${item} "build ${item}?" ON)
     if (build_${item})
         set(cexx ${item})
         add_executable(${cexx} ${cexx}.cxx)
