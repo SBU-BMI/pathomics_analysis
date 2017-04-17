@@ -5,8 +5,9 @@ ENV DIR=/tmp/pathomics_analysis/nucleusSegmentation
 ENV BLD_DIR=$DIR/build
 ENV SRC_DIR=$DIR/src
 
-# Clone GitHub repository
-RUN cd /tmp && git clone -b develop https://github.com/SBU-BMI/pathomics_analysis.git
+RUN mkdir -p /tmp/pathomics_analysis
+WORKDIR /tmp/pathomics_analysis
+COPY . /tmp/pathomics_analysis
 
 # Build
 RUN mkdir $BLD_DIR && cd $WORKDIR
@@ -19,3 +20,4 @@ RUN cp app/main* /usr/local/bin/.
 
 # Copy script
 RUN cp ../script/mainAggregateFeatures.py  /usr/local/bin/.
+
