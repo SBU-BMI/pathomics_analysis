@@ -14,7 +14,7 @@ error_exit() {
 #
 container_name="$USER-test_segmentation"
 input_file="TCGA-41-3393-01Z-00-DX1_18300_68910_600_600_GBM.png"
-cwd=$(pwd)
+cwd="$(pwd)"
 
 # Segment image
 test1()
