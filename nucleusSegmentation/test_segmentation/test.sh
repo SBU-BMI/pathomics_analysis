@@ -26,15 +26,15 @@ test1()
   # and copy output from container to local file system.
   python ../script/run_docker_segment.py \
   segment \
-  $container_name \
-  $input_file \
-  $output_file \
+  "$container_name" \
+  "$input_file" \
+  "$output_file" \
   -t img \
   -j Y \
   -s 12560,47520 \
   -b 500,500 \
   -d 500,500 \
-  -a $exec_id \
+  -a "$exec_id" \
   -c TCGA-CS-4938-01Z-00-DX1 \
   -p TCGA-CS-4938
 }
@@ -44,14 +44,29 @@ test2()
 {
   input_dir="/tmp/input"
   output_dir="/tmp/output"
-  containerId=$(docker inspect --format '{{ .Id }}' $container_name)
+  output_file="$output_dir/output_label.png"
+  containerId="$(docker inspect --format '{{ .Id }}' $container_name)"
 
-  docker exec -d $container_name mkdir -p $input_dir
-  docker exec -d $container_name mkdir -p $output_dir
-  docker cp $input_file $container_name:$input_dir
+  echo "Creating input and output dirs"
+  docker exec -d "$container_name" mkdir -p "$input_dir"
+  docker exec -d "$container_name" mkdir -p "$output_dir"
+  docker exec "$containerId" ls -lt "/tmp"
+
+  echo "Copying input file to docker"
+  docker cp "$input_file" "$container_name":"$input_dir"
+  docker exec "$containerId" ls -lt "$input_dir"
+
   # Using Docker to run mainSegmentSmallImage
-  docker exec -d $container_name mainSegmentSmallImage $input_dir/$input_file $output_dir/output || error_exit "Error running mainSegmentSmallImage"
-  docker cp $containerId:$output_dir/output_label.png $cwd || error_exit "Could not download output_label.png"
+  docker exec -d "$container_name" mainSegmentSmallImage "$input_dir/$input_file" "$output_dir/output" || error_exit "Error running mainSegmentSmallImage"
+  sleep 15
+  docker exec "$containerId" ls -lt "$output_dir"
+  docker cp "$containerId":"$output_file" "$cwd" || error_exit "Could not download output_label.png"
+  #while [ ! -f "$(docker exec $containerId ls $output_file)" ] ;
+  #do
+  #  echo "sleeping..."
+  #  sleep 2
+  #done
+  #docker exec "$containerId" ls "$output_dir"  
 }
 
 #test1
