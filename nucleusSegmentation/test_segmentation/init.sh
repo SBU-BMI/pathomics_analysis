@@ -5,8 +5,8 @@ PROGNAME=$(basename "$0")
 
 # Error trapping
 error_exit() {
-   echo "${PROGNAME}: ${1:-"Error"}" 1>&2
-   exit 1
+  echo "${PROGNAME}: ${1:-"Error"}" 1>&2
+  exit 1
 }
 
 image_name="sbubmi/test_segmentation"
