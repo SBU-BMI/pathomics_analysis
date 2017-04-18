@@ -1,16 +1,25 @@
 #!/bin/bash
 
+# Program name
+PROGNAME=$(basename "$0")
+
+# Error trapping
+error_exit() {
+  echo "${PROGNAME}: ${1:-"Error"}" 1>&2
+  exit 1
+}
+
 #
 # Assuming same container name as set in init.sh
 #
 container_name="$USER-test_segmentation"
 input_file="TCGA-41-3393-01Z-00-DX1_18300_68910_600_600_GBM.png"
+cwd=$(pwd)
 
 # Segment image
 test1()
 {
   exec_id="20170412133151"
-  cwd=$(pwd)
   output_file="$cwd/test_out.zip"
 
   # Using Python script to run mainSegmentFeatures
@@ -41,8 +50,8 @@ test2()
   docker exec -d $container_name mkdir -p $output_dir
   docker cp $input_file $container_name:$input_dir
   # Using Docker to run mainSegmentSmallImage
-  docker exec -d $container_name mainSegmentSmallImage $input_dir/$input_file "$output_dir/output"
-  docker cp $containerId:$output_dir/output_label.png .
+  docker exec -d $container_name mainSegmentSmallImage $input_dir/$input_file $output_dir/output || error_exit "Error running mainSegmentSmallImage"
+  docker cp $containerId:$output_dir/output_label.png $cwd || error_exit "Could not download output_label.png"
 }
 
 #test1
