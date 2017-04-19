@@ -388,164 +388,174 @@ namespace ImagenomicAnalytics
 					     float msKernel = 20.0, \
 					     int levelsetNumberOfIteration = 100, \
 					     bool doDeclump = false)
-      {
-	std::cout << "normalizeImageColor.....\n" << std::flush;
-	cv::Mat newImgCV = normalizeImageColor<char>(thisTileCV);
+    {
+      std::cout << "normalizeImageColor.....\n" << std::flush;
+      cv::Mat newImgCV = normalizeImageColor<char>(thisTileCV);
 
-	std::cout << "extractTissueMask.....\n" << std::flush;
-	itkUCharImageType::Pointer foregroundMask = extractTissueMask<char>(newImgCV);
+      std::cout << "extractTissueMask.....\n" << std::flush;
+      itkUCharImageType::Pointer foregroundMask = extractTissueMask<char>(newImgCV);
 
-	itkRGBImageType::Pointer thisTile = itk::OpenCVImageBridge::CVMatToITKImage<itkRGBImageType>(thisTileCV);
+      itkRGBImageType::Pointer thisTile = itk::OpenCVImageBridge::CVMatToITKImage<itkRGBImageType>(thisTileCV);
 
-	//IO::writeImage<itkRGBImageType>(thisTile, "thisTile.png", 0);
+      //IO::writeImage<itkRGBImageType>(thisTile, "thisTile.png", 0);
 
-	std::cout << "ExtractHematoxylinChannel.....\n" << std::flush;
-	itkUCharImageType::Pointer hematoxylinImage = ExtractHematoxylinChannel<char>(thisTile);
+      std::cout << "ExtractHematoxylinChannel.....\n" << std::flush;
+      itkUCharImageType::Pointer hematoxylinImage = ExtractHematoxylinChannel<char>(thisTile);
 
-	short maskValue = 1;
+      short maskValue = 1;
 
-	itkFloatImageType::Pointer hemaFloat = ScalarImage::castItkImage<itkUCharImageType, itkFloatImageType>(
-													       hematoxylinImage);
+      itkFloatImageType::Pointer hemaFloat = ScalarImage::castItkImage<itkUCharImageType, itkFloatImageType>(
+                                                                                                             hematoxylinImage);
 
-	std::cout << "ThresholdImage.....\n" << std::flush;
+      std::cout << "ThresholdImage.....\n" << std::flush;
 
-	itkUCharImageType::Pointer nucleusBinaryMask = ScalarImage::otsuThresholdImage<char>(hemaFloat, maskValue,
-											     otsuRatio);
+      itkUCharImageType::Pointer nucleusBinaryMask = ScalarImage::otsuThresholdImage<char>(hemaFloat, maskValue,
+                                                                                           otsuRatio);
 
-	long numPixels = nucleusBinaryMask->GetLargestPossibleRegion().GetNumberOfPixels();
+      long numPixels = nucleusBinaryMask->GetLargestPossibleRegion().GetNumberOfPixels();
 
-	//std::cout<<"output otsuThresholdImage.....\n"<<std::flush;
-	//ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, "nucleusBinaryMask.png", 0);
+      //std::cout<<"output otsuThresholdImage.....\n"<<std::flush;
+      //ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, "nucleusBinaryMask.png", 0);
 
-	if (foregroundMask) {
-	  const itkUCharImageType::PixelType *fgMaskBufferPointer = foregroundMask->GetBufferPointer();
-	  itkBinaryMaskImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+      if (foregroundMask) {
+        const itkUCharImageType::PixelType *fgMaskBufferPointer = foregroundMask->GetBufferPointer();
+        itkBinaryMaskImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
 
-	  for (long it = 0; it < numPixels; ++it) {
-	    if (0 == fgMaskBufferPointer[it]) {
-	      // for sure glass region
-	      nucleusBinaryMaskBufferPointer[it] = 0;
-	    }
-	  }
-	}
-
-	if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
-	  std::cout << "before CV\n" << std::flush;
-
-	  //int numiter = 100;
-	  time_t start, end;
-	  time(&start);
-	  CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType> cv;
-	  cv.setImage(hemaFloat);
-	  cv.setMask(nucleusBinaryMask);
-	  cv.setNumIter(levelsetNumberOfIteration);
-	  cv.setCurvatureWeight(curvatureWeight);
-	  cv.doSegmentation();
-	  time(&end);
-	  double dif = difftime(end, start);
-	  printf("Elasped time is %.2lf seconds.\n", dif);
-
-	  std::cout << "after CV\n" << std::flush;
-
-	  CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType>::LSImageType::Pointer phi = cv.mp_phi;
-
-	  itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
-	  CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType>::LSImageType::PixelType *phiBufferPointer = phi->GetBufferPointer();
-
-	  for (long it = 0; it < numPixels; ++it) {
-	    nucleusBinaryMaskBufferPointer[it] = phiBufferPointer[it] <= 1.0 ? 1 : 0;
-	  }
-	}
-
-
-	typedef itk::BinaryFillholeImageFilter< itkBinaryMaskImageType > fhFilterType;
-	fhFilterType::Pointer fhfilter = fhFilterType::New();
-	fhfilter->SetInput( nucleusBinaryMask );
-	fhfilter->SetForegroundValue( 1 );
-	fhfilter->Update();
-
-
-	typedef itk::ConnectedComponentImageFilter <itkBinaryMaskImageType, itkLabelImageType > ConnectedComponentImageFilterType;
-	ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New ();
-	connected->SetInput(nucleusBinaryMask);
-	connected->Update();
-
-	typedef itk::RelabelComponentImageFilter<itkLabelImageType, itkLabelImageType> FilterType;
-	FilterType::Pointer relabelFilter = FilterType::New();
-	relabelFilter->SetInput(connected->GetOutput());
-	relabelFilter->SetMinimumObjectSize(static_cast<FilterType::ObjectSizeType>(sizeThld/mpp/mpp));
-	relabelFilter->Update();
-
-	itkLabelImageType::Pointer tmpImg = relabelFilter->GetOutput();
-
-	itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
-	itkLabelImageType::PixelType *tmpImgBufferPointer = tmpImg->GetBufferPointer();
-
-	for (long it = 0; it < nucleusBinaryMask->GetLargestPossibleRegion().GetNumberOfPixels(); ++it)
-	  {
-	    nucleusBinaryMaskBufferPointer[it] = tmpImgBufferPointer[it] > 0 ? 1 : 0;
-	  }
-
-
-	if (doDeclump) {
-	  if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
-	    gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
-	    binaryMaskAnalyzer.setMaskImage(nucleusBinaryMask);
-	    binaryMaskAnalyzer.setObjectSizeThreshold(sizeThld);
-	    binaryMaskAnalyzer.setObjectSizeUpperThreshold(sizeUpperThld);
-	    binaryMaskAnalyzer.setMeanshiftSigma(msKernel);
-	    binaryMaskAnalyzer.setMPP(mpp);
-	    binaryMaskAnalyzer.update();
-
-	    std::cout << "after declumping\n" << std::flush;
-
-	    itkUIntImageType::Pointer outputLabelImage = binaryMaskAnalyzer.getConnectedComponentLabelImage();
-	    itkUCharImageType::Pointer edgeBetweenLabelsMask = ScalarImage::edgesOfDifferentLabelRegion<char>(
-													      ScalarImage::castItkImage<itkUIntImageType, itkUIntImageType>(
-																					    binaryMaskAnalyzer.getConnectedComponentLabelImage()));
-	    itkUCharImageType::PixelType *edgeBetweenLabelsMaskBufferPointer = edgeBetweenLabelsMask->GetBufferPointer();
-
-	    const itkUIntImageType::PixelType *outputLabelImageBufferPointer = outputLabelImage->GetBufferPointer();
-
-	    itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
-
-	    for (long it = 0; it < numPixels; ++it) {
-	      nucleusBinaryMaskBufferPointer[it] = outputLabelImageBufferPointer[it] >= 1 ? 1 : 0;
-	      nucleusBinaryMaskBufferPointer[it] *= (1 - edgeBetweenLabelsMaskBufferPointer[it]);
-	    }
-	  }
-	}
-
-
-	if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
-	  int numiter = 50;
-	  CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType> cv;
-	  cv.setImage(hemaFloat);
-	  cv.setMask(nucleusBinaryMask);
-	  cv.setNumIter(numiter);
-	  cv.setCurvatureWeight(curvatureWeight);
-	  cv.doSegmentation();
-
-	  CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType>::LSImageType::Pointer phi = cv.mp_phi;
-
-	  itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
-	  CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType>::LSImageType::PixelType *phiBufferPointer = phi->GetBufferPointer();
-
-	  for (long it = 0; it < numPixels; ++it) {
-	    nucleusBinaryMaskBufferPointer[it] = phiBufferPointer[it] <= 1.0 ? 1 : 0;
-	  }
-	}
-
-	//std::cout << "before ConnectedComponent\n" << std::flush;
-	//typedef itk::ConnectedComponentImageFilter <itkUCharImageType, itkUShortImageType > ConnectedComponentImageFilterType;
-	//ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New ();
-	//connected->SetInput(nucleusBinaryMask);
-	//connected->Update();
-	//outputLabelImageUShort = connected->GetOutput();
-	//std::cout << "after ConnectedComponent\n" << std::flush;
-
-	return nucleusBinaryMask;
+        for (long it = 0; it < numPixels; ++it) {
+          if (0 == fgMaskBufferPointer[it]) {
+            // for sure glass region
+            nucleusBinaryMaskBufferPointer[it] = 0;
+          }
+        }
       }
+
+      // SEGMENT: ChanVese
+      if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
+        std::cout << "before CV\n" << std::flush;
+
+        //int numiter = 100;
+        time_t start, end;
+        time(&start);
+        CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType> cv;
+        cv.setImage(hemaFloat);
+        cv.setMask(nucleusBinaryMask);
+        cv.setNumIter(levelsetNumberOfIteration);
+        cv.setCurvatureWeight(curvatureWeight);
+        cv.doSegmentation();
+        time(&end);
+        double dif = difftime(end, start);
+        printf("Elasped time is %.2lf seconds.\n", dif);
+
+        std::cout << "after CV\n" << std::flush;
+
+        CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType>::LSImageType::Pointer phi = cv.mp_phi;
+
+        itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+        CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType>::LSImageType::PixelType *phiBufferPointer = phi->GetBufferPointer();
+
+        for (long it = 0; it < numPixels; ++it) {
+          nucleusBinaryMaskBufferPointer[it] = phiBufferPointer[it] <= 1.0 ? 1 : 0;
+        }
+      }
+
+
+      typedef itk::BinaryFillholeImageFilter< itkBinaryMaskImageType > fhFilterType;
+      fhFilterType::Pointer fhfilter = fhFilterType::New();
+      fhfilter->SetInput( nucleusBinaryMask );
+      fhfilter->SetForegroundValue( 1 );
+      fhfilter->Update();
+
+
+      typedef itk::ConnectedComponentImageFilter <itkBinaryMaskImageType, itkLabelImageType > ConnectedComponentImageFilterType;
+      ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New ();
+      connected->SetInput(nucleusBinaryMask);
+      connected->Update();
+
+      typedef itk::RelabelComponentImageFilter<itkLabelImageType, itkLabelImageType> FilterType;
+      FilterType::Pointer relabelFilter = FilterType::New();
+      relabelFilter->SetInput(connected->GetOutput());
+      relabelFilter->SetMinimumObjectSize(static_cast<FilterType::ObjectSizeType>(sizeThld/mpp/mpp));
+      relabelFilter->Update();
+
+      itkLabelImageType::Pointer tmpImg = relabelFilter->GetOutput();
+
+      itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+      itkLabelImageType::PixelType *tmpImgBufferPointer = tmpImg->GetBufferPointer();
+
+      for (long it = 0; it < nucleusBinaryMask->GetLargestPossibleRegion().GetNumberOfPixels(); ++it)
+        {
+          nucleusBinaryMaskBufferPointer[it] = tmpImgBufferPointer[it] > 0 ? 1 : 0;
+        }
+
+
+      // SEGMENT: Declumping
+      if (doDeclump) {
+        if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
+          gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
+          binaryMaskAnalyzer.setMaskImage(nucleusBinaryMask);
+          binaryMaskAnalyzer.setObjectSizeThreshold(sizeThld);
+          binaryMaskAnalyzer.setObjectSizeUpperThreshold(sizeUpperThld);
+          binaryMaskAnalyzer.setMeanshiftSigma(msKernel);
+          binaryMaskAnalyzer.setMPP(mpp);
+          binaryMaskAnalyzer.update();
+
+          std::cout << "after declumping\n" << std::flush;
+
+          itkUIntImageType::Pointer outputLabelImage = binaryMaskAnalyzer.getConnectedComponentLabelImage();
+          itkUCharImageType::Pointer edgeBetweenLabelsMask = ScalarImage::edgesOfDifferentLabelRegion<char>(
+                                                                                                            ScalarImage::castItkImage<itkUIntImageType, itkUIntImageType>(
+                                                                                                                                                                          binaryMaskAnalyzer.getConnectedComponentLabelImage()));
+          itkUCharImageType::PixelType *edgeBetweenLabelsMaskBufferPointer = edgeBetweenLabelsMask->GetBufferPointer();
+
+          const itkUIntImageType::PixelType *outputLabelImageBufferPointer = outputLabelImage->GetBufferPointer();
+
+          itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+
+          for (long it = 0; it < numPixels; ++it) {
+            nucleusBinaryMaskBufferPointer[it] = outputLabelImageBufferPointer[it] >= 1 ? 1 : 0;
+            nucleusBinaryMaskBufferPointer[it] *= (1 - edgeBetweenLabelsMaskBufferPointer[it]);
+          }
+        }
+      }
+
+      // SEGMENT: ChanVese again, with numiter = 50.
+      if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
+        int numiter = 50;
+        CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType> cv;
+        cv.setImage(hemaFloat);
+        cv.setMask(nucleusBinaryMask);
+        cv.setNumIter(numiter);
+        cv.setCurvatureWeight(curvatureWeight);
+        cv.doSegmentation();
+
+        CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType>::LSImageType::Pointer phi = cv.mp_phi;
+
+        itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+        CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType>::LSImageType::PixelType *phiBufferPointer = phi->GetBufferPointer();
+
+        for (long it = 0; it < numPixels; ++it) {
+          nucleusBinaryMaskBufferPointer[it] = phiBufferPointer[it] <= 1.0 ? 1 : 0;
+        }
+      }
+
+      // FIX hole in object
+      fhFilterType::Pointer fhfilter1 = fhFilterType::New();
+      fhfilter1->SetInput( nucleusBinaryMask );
+      fhfilter1->SetForegroundValue( 1 );
+      fhfilter1->Update();
+
+        //std::cout << "before ConnectedComponent\n" << std::flush;
+        //typedef itk::ConnectedComponentImageFilter <itkUCharImageType, itkUShortImageType > ConnectedComponentImageFilterType;
+        //ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New ();
+        //connected->SetInput(nucleusBinaryMask);
+        //connected->Update();
+        //outputLabelImageUShort = connected->GetOutput();
+        //std::cout << "after ConnectedComponent\n" << std::flush;
+
+	// return nucleusBinaryMask;
+	    
+      return fhfilter1->GetOutput();
+    }
 
 
     template<typename TNull>
