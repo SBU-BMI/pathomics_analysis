@@ -25,10 +25,9 @@
 #include "itkRelabelComponentImageFilter.h"
 
 #include "Normalization.h"
-#include "HistologicalEntities.h"
+//#include "HistologicalEntities.h"
 #include "BinaryMaskAnalysisFilter.h"
 #include "SFLSLocalChanVeseSegmentor2D.h"
-
 
 #include "itkTypedefs.h"
 
@@ -498,7 +497,7 @@ namespace ImagenomicAnalytics {
 
                     // WATERSHED
                     if (declumpingType == 2) {
-
+/*
                         cv::Mat watershedMask;
                         cv::Mat seg = itk::OpenCVImageBridge::ITKImageToCVMat<itkUCharImageType>(nucleusBinaryMask);
 
@@ -507,7 +506,7 @@ namespace ImagenomicAnalytics {
                         nscale::HistologicalEntities::plSeparateNuclei(newImgCV, seg, watershedMask, 30, 8, NULL, NULL);
 
                         nucleusBinaryMask = itk::OpenCVImageBridge::CVMatToITKImage<itkUCharImageType>(watershedMask);
-
+*/
                     }
 
                     // MEAN SHIFT
