@@ -7,8 +7,6 @@ set(SOURCE_FILES
         ReadUnknownImageType.cpp
         )
 
-include_directories("../../include")
+include_directories(${PROJECT_SOURCE_DIR}/include)
 	
 add_library(ConvertFunctions ${SOURCE_FILES})
-
-
