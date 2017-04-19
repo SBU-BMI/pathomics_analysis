@@ -219,7 +219,7 @@ namespace ImagenomicAnalytics {
         cv::Mat normalizeImageColor(cv::Mat image) {
             float meanT[3] = {-0.632356, -0.0516004, 0.0376543};
             float stdT[3] = {0.26235, 0.0514831,
-                             0.0114217}; ///< These are learnt from the tempalte GBM image selected by George
+                             0.0114217}; ///< These are learnt from the template GBM image selected by George
             cv::Mat newImgCV = nscale::Normalization::normalization(image, meanT, stdT);
 
             return newImgCV;
@@ -376,8 +376,7 @@ namespace ImagenomicAnalytics {
 
         /**
          * Process Tile
-         * Instead of passing in parameter doDeclump true/false,
-         * passing in an integer.
+         * declumpingType:
          * 0 = No declumping
          * 1 = Mean Shift
          * 2 = Watershed
@@ -582,6 +581,9 @@ namespace ImagenomicAnalytics {
         }
 
 
+        /**
+         * NOT USED.
+         */
         template<typename TNull>
         itkUCharImageType::Pointer processTileOptimalThreshold(cv::Mat thisTileCV, \
                                  itkUShortImageType::Pointer &outputLabelImageUShort, \
@@ -591,7 +593,7 @@ namespace ImagenomicAnalytics {
                                  double mpp = 0.25, \
                                  float msKernel = 20.0, \
                                  int levelsetNumberOfIteration = 100, \
-                                 bool doDeclump = false) {
+                                 int declumpingType = 0) {
             std::cout << "normalizeImageColor.....\n" << std::flush;
             cv::Mat newImgCV = normalizeImageColor<char>(thisTileCV);
 
@@ -660,7 +662,7 @@ namespace ImagenomicAnalytics {
                 }
             }
 
-            if (doDeclump) {
+            if (declumpingType == 1) {
                 if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
                     gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
                     binaryMaskAnalyzer.setMaskImage(nucleusBinaryMask);
@@ -829,11 +831,11 @@ namespace ImagenomicAnalytics {
         }
 
         /**
-         * Process Tile
-         * Passing in declumpingType parameter as integer
-         * 0 = no declumping
-         * 1 = Yi's Mean Shift
-         * 2 = Jun's Watershed
+         * Process Tile CV
+         * declumpingType:
+         * 0 = None
+         * 1 = Mean Shift
+         * 2 = Watershed
          */
         cv::Mat processTileCV(cv::Mat thisTileCV, \
                           float otsuRatio = 1.0, \
@@ -875,6 +877,5 @@ namespace ImagenomicAnalytics {
 
     }
 }// namespace
-
 
 #endif

@@ -49,7 +49,7 @@ def print_help_segment():
     print '          -l <sizeLowerThld> '
     print '          -u <sizeUpperThld> '
     print '          -k <msKernel> '
-    print '          -j <doDeclump: Y or N> '
+    print '          -j <declumpingType: 0=None | 1=MeanShift | 2=Watershed> '
     print '          -n <levelsetNumberOfIterations> '
     print '          -m <mpp> '
     print '          -e <analysis desc: string> '
