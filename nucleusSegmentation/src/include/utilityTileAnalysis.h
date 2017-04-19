@@ -25,6 +25,7 @@
 #include "itkRelabelComponentImageFilter.h"
 
 #include "Normalization.h"
+#include "HistologicalEntities.h"
 #include "BinaryMaskAnalysisFilter.h"
 #include "SFLSLocalChanVeseSegmentor2D.h"
 
