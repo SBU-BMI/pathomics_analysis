@@ -374,6 +374,14 @@ namespace ImagenomicAnalytics {
             return mask;
         }
 
+        /**
+         * Process Tile
+         * Instead of passing in parameter doDeclump true/false,
+         * passing in an integer.
+         * 0 = No declumping
+         * 1 = Mean Shift
+         * 2 = Watershed
+         */
         template<typename TNull>
         itkUCharImageType::Pointer processTile(cv::Mat thisTileCV, \
                          itkUShortImageType::Pointer &outputLabelImageUShort, \
@@ -384,7 +392,7 @@ namespace ImagenomicAnalytics {
                          double mpp = 0.25, \
                          float msKernel = 20.0, \
                          int levelsetNumberOfIteration = 100, \
-                         bool doDeclump = false) {
+                         int declumpingType = 0) {
             std::cout << "normalizeImageColor.....\n" << std::flush;
             cv::Mat newImgCV = normalizeImageColor<char>(thisTileCV);
 
@@ -484,32 +492,53 @@ namespace ImagenomicAnalytics {
 
 
             // SEGMENT: Declumping
-            if (doDeclump) {
-                if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
-                    gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
-                    binaryMaskAnalyzer.setMaskImage(nucleusBinaryMask);
-                    binaryMaskAnalyzer.setObjectSizeThreshold(sizeThld);
-                    binaryMaskAnalyzer.setObjectSizeUpperThreshold(sizeUpperThld);
-                    binaryMaskAnalyzer.setMeanshiftSigma(msKernel);
-                    binaryMaskAnalyzer.setMPP(mpp);
-                    binaryMaskAnalyzer.update();
+            // Here, instead of testing boolean, we are testing an int value.
+            if (declumpingType > 0) {
+                if (!ImagenomicAnalytics::ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
 
-                    std::cout << "after declumping\n" << std::flush;
+                    // WATERSHED
+                    if (declumpingType == 2) {
 
-                    itkUIntImageType::Pointer outputLabelImage = binaryMaskAnalyzer.getConnectedComponentLabelImage();
-                    itkUCharImageType::Pointer edgeBetweenLabelsMask = ScalarImage::edgesOfDifferentLabelRegion<char>(
-                            ScalarImage::castItkImage<itkUIntImageType, itkUIntImageType>(
-                                    binaryMaskAnalyzer.getConnectedComponentLabelImage()));
-                    itkUCharImageType::PixelType *edgeBetweenLabelsMaskBufferPointer = edgeBetweenLabelsMask->GetBufferPointer();
+                        cv::Mat watershedMask;
+                        cv::Mat seg = itk::OpenCVImageBridge::ITKImageToCVMat<itkUCharImageType>(nucleusBinaryMask);
 
-                    const itkUIntImageType::PixelType *outputLabelImageBufferPointer = outputLabelImage->GetBufferPointer();
+                        // (img, seg, mask, int minSizePl=30, int watershedConnectivity=8,
+                        // ::cciutils::SimpleCSVLogger *logger = NULL, ::cciutils::cv::IntermediateResultHandler *iresHandler = NULL);
+                        nscale::HistologicalEntities::plSeparateNuclei(newImgCV, seg, watershedMask, 30, 8, NULL, NULL);
 
-                    itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+                        nucleusBinaryMask = itk::OpenCVImageBridge::CVMatToITKImage<itkUCharImageType>(watershedMask);
 
-                    for (long it = 0; it < numPixels; ++it) {
-                        nucleusBinaryMaskBufferPointer[it] = outputLabelImageBufferPointer[it] >= 1 ? 1 : 0;
-                        nucleusBinaryMaskBufferPointer[it] *= (1 - edgeBetweenLabelsMaskBufferPointer[it]);
                     }
+
+                    // MEAN SHIFT
+                    if (declumpingType == 1) {
+                        gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
+                        binaryMaskAnalyzer.setMaskImage(nucleusBinaryMask);
+                        binaryMaskAnalyzer.setObjectSizeThreshold(sizeThld);
+                        binaryMaskAnalyzer.setObjectSizeUpperThreshold(sizeUpperThld);
+                        binaryMaskAnalyzer.setMeanshiftSigma(msKernel);
+                        binaryMaskAnalyzer.setMPP(mpp);
+                        // Assumes declumpingType==0
+                        binaryMaskAnalyzer.update();
+
+                        std::cout << "after declumping\n" << std::flush;
+
+                        itkUIntImageType::Pointer outputLabelImage = binaryMaskAnalyzer.getConnectedComponentLabelImage();
+                        itkUCharImageType::Pointer edgeBetweenLabelsMask = ScalarImage::edgesOfDifferentLabelRegion<char>(
+                                ScalarImage::castItkImage<itkUIntImageType, itkUIntImageType>(
+                                        binaryMaskAnalyzer.getConnectedComponentLabelImage()));
+                        itkUCharImageType::PixelType *edgeBetweenLabelsMaskBufferPointer = edgeBetweenLabelsMask->GetBufferPointer();
+
+                        const itkUIntImageType::PixelType *outputLabelImageBufferPointer = outputLabelImage->GetBufferPointer();
+
+                        itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+
+                        for (long it = 0; it < numPixels; ++it) {
+                            nucleusBinaryMaskBufferPointer[it] = outputLabelImageBufferPointer[it] >= 1 ? 1 : 0;
+                            nucleusBinaryMaskBufferPointer[it] *= (1 - edgeBetweenLabelsMaskBufferPointer[it]);
+                        }
+                    }
+
                 }
             }
 
@@ -799,7 +828,13 @@ namespace ImagenomicAnalytics {
             return outputLabelImage;
         }
 
-
+        /**
+         * Process Tile
+         * Passing in declumpingType parameter as integer
+         * 0 = no declumping
+         * 1 = Yi's Mean Shift
+         * 2 = Jun's Watershed
+         */
         cv::Mat processTileCV(cv::Mat thisTileCV, \
                           float otsuRatio = 1.0, \
                           double curvatureWeight = 0.8, \
@@ -807,19 +842,22 @@ namespace ImagenomicAnalytics {
                           float sizeUpperThld = 200, \
                           double mpp = 0.25, \
                           float msKernel = 20.0, \
-                          int levelsetNumberOfIteration = 100) {
+                          int levelsetNumberOfIteration = 100,
+                          int declumpingType = 0) {
+
             itkUShortImageType::Pointer outputLabelImage;
 
             // call regular segmentation function
             itkUCharImageType::Pointer nucleusBinaryMask = processTile<char>(thisTileCV, \
-                                     outputLabelImage, \
-                                     otsuRatio, \
-                                     curvatureWeight, \
-                                     sizeThld, \
-                                     sizeUpperThld, \
-                                     mpp, \
-                                     msKernel, \
-                                     levelsetNumberOfIteration);
+                                                                       outputLabelImage, \
+                                                                       otsuRatio, \
+                                                                       curvatureWeight, \
+                                                                       sizeThld, \
+                                                                       sizeUpperThld, \
+                                                                       mpp, \
+                                                                       msKernel, \
+                                                                       levelsetNumberOfIteration,
+                                                                       declumpingType);
 
             // change pixel values for visualization reasons
             itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
@@ -830,12 +868,10 @@ namespace ImagenomicAnalytics {
                 }
             }
 
-
             cv::Mat binary = itk::OpenCVImageBridge::ITKImageToCVMat<itkUCharImageType>(nucleusBinaryMask);
             return binary;
 
         }
-
 
     }
 }// namespace
