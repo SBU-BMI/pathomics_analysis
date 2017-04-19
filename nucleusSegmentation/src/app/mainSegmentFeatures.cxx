@@ -96,7 +96,7 @@ typedef struct _AnalysisParameters {
     float sizeLowerThld;
     float sizeUpperThld;
     float msKernel;
-    bool doDeclump;
+    int declumpingType;
     int64_t levelsetNumberOfIteration;
 
     int64_t tileMinX, tileMinY;
@@ -125,7 +125,7 @@ int captureAnalysisParameters(AnalysisParameters *analysisParams, InputParameter
     analysisParams->sizeLowerThld = inpParams->sizeLowerThld;
     analysisParams->sizeUpperThld = inpParams->sizeUpperThld;
     analysisParams->msKernel = inpParams->msKernel;
-    analysisParams->doDeclump = inpParams->doDeclump;
+    analysisParams->declumpingType = inpParams->declumpingType;
     analysisParams->levelsetNumberOfIteration = inpParams->levelsetNumberOfIteration;
 
     analysisParams->tileMinX = inpParams->topLeftX;
@@ -194,7 +194,7 @@ int writeAnalysisParametersJSON(std::string outFilePrefix, AnalysisParameters *a
                        << "\"min_size\" : " << analysisParams->sizeLowerThld << ", "
                        << "\"max_size\" : " << analysisParams->sizeUpperThld << ", "
                        << "\"ms_kernel\" : " << analysisParams->msKernel << ", "
-                       << "\"do_declump\" : " << analysisParams->doDeclump << ", "
+                       << "\"declump_type\" : " << analysisParams->declumpingType << ", "
                        << "\"levelset_num_iters\" : " << analysisParams->levelsetNumberOfIteration << ", "
                        << "\"mpp\" : " << analysisParams->mpp << ", "
                        << "\"image_width\" : " << analysisParams->imgWidth << ", "
@@ -229,7 +229,7 @@ int writeAnalysisParametersCSV(std::string outFilePrefix, AnalysisParameters *an
                        << "min_size,"
                        << "max_size,"
                        << "ms_kernel,"
-                       << "do_declump,"
+                       << "declump_type,"
                        << "levelset_num_iters,"
                        << "mpp,"
                        << "image_width,"
@@ -289,7 +289,7 @@ int writeAnalysisParametersCSV(std::string outFilePrefix, AnalysisParameters *an
                        << analysisParams->sizeLowerThld << ","
                        << analysisParams->sizeUpperThld << ","
                        << analysisParams->msKernel << ","
-                       << analysisParams->doDeclump << ","
+                       << analysisParams->declumpingType << ","
                        << analysisParams->levelsetNumberOfIteration << ","
                        << analysisParams->mpp << ","
                        << analysisParams->imgWidth << ","
@@ -515,7 +515,7 @@ int segmentWSI(InputParameters *inpParams) {
                                                                                                             inpParams->mpp,
                                                                                                             inpParams->msKernel,
                                                                                                             inpParams->levelsetNumberOfIteration,
-                                                                                                            inpParams->doDeclump);
+                                                                                                            inpParams->declumpingType);
 
 #pragma omp critical
         {
@@ -671,7 +671,7 @@ int segmentImg(InputParameters *inpParams) {
                                                                                                         inpParams->mpp,
                                                                                                         inpParams->msKernel,
                                                                                                         inpParams->levelsetNumberOfIteration,
-                                                                                                        inpParams->doDeclump);
+                                                                                                        inpParams->declumpingType);
 
     // Output original
     if (inpParams->outputLevel >= MASK_IMG) {
@@ -1011,7 +1011,7 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList) {
                     thisTile, outputLabelImageUShort,
                     inpParams->otsuRatio, inpParams->curvatureWeight, inpParams->sizeLowerThld,
                     inpParams->sizeUpperThld, mpp, inpParams->msKernel, inpParams->levelsetNumberOfIteration,
-                    inpParams->doDeclump);
+                    inpParams->declumpingType);
 
 #pragma omp critical
             {

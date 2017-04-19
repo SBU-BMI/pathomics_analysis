@@ -2,7 +2,6 @@
 #include <iostream>
 #include <string>
 
-
 //itk
 #include "itkImage.h"
 #include "itkRGBPixel.h"
@@ -11,11 +10,8 @@
 #include "itkCastImageFilter.h"
 #include "itkOpenCVImageBridge.h"
 
-// openslide
-
 // openCV
 #include <opencv2/opencv.hpp>
-
 
 #include "Normalization.h"
 
@@ -23,14 +19,10 @@
 
 #include "BinaryMaskAnalysisFilter.h"
 
-
 #include "SFLSLocalChanVeseSegmentor2D.h"
 
 #include "utilityTileAnalysis.h"
 #include "utilityIO.h"
-
-#include "ProcessTileUtils.h"
-
 
 int main(int argc, char **argv) {
     if (argc < 3) {
@@ -135,7 +127,7 @@ int main(int argc, char **argv) {
     //declumpingType = 0; // no declumping
     //declumpingType = 1; // mean shift
     declumpingType = 2; // watershed
-    cv::Mat seg = processTileCVDeclumpType(thisTile, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel, levelsetNumberOfIteration, declumpingType);
+    cv::Mat seg = ImagenomicAnalytics::TileAnalysis::processTileCV(thisTile, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel, levelsetNumberOfIteration, declumpingType);
     imwrite(outputLabelName.c_str(), seg);
 
     // cv::Mat seg = ImagenomicAnalytics::TileAnalysis::processTileCV(thisTile, otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, mpp, msKernel);
