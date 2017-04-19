@@ -229,7 +229,7 @@ int writeAnalysisParametersCSV(std::string outFilePrefix, AnalysisParameters *an
                        << "min_size,"
                        << "max_size,"
                        << "ms_kernel,"
-                       << "do_declump,"
+                       << "declump_type,"
                        << "levelset_num_iters,"
                        << "mpp,"
                        << "image_width,"
