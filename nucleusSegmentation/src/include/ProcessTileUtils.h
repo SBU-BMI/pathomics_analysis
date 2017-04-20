@@ -1,3 +1,5 @@
+#if 0
+
 #ifndef ProcessTileUtils_h_
 #define ProcessTileUtils_h_
 
@@ -267,5 +269,7 @@ cv::Mat processTileCVDeclumpType(cv::Mat thisTileCV, \
     return binary;
 
 }
+
+#endif
 
 #endif

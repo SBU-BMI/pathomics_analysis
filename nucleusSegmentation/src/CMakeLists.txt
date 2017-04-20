@@ -85,6 +85,27 @@ set(Libraries
 
 ################################################################################
 # build local libraries
+
+include(ExternalProject)
+
+ExternalProject_Add(nscale-proj1
+        DOWNLOAD_DIR nscale
+        GIT_REPOSITORY https://github.com/SBU-BMI/nscale.git
+        SOURCE_DIR nscale
+        CMAKE_ARGS -DOpenCV_DIR=${OpenCV_DIR}
+        INSTALL_COMMAND ""
+        )
+
+set(nscalesrcdir ${CMAKE_BINARY_DIR}/nscale/src)
+set(nscalebuilddir ${CMAKE_BINARY_DIR}/nscale-proj1-prefix/src/nscale-proj1-build)
+
+include_directories(${nscalesrcdir}/segment)
+include_directories(${nscalesrcdir}/segment/cuda)
+include_directories(${nscalesrcdir}/common)
+include_directories(${nscalesrcdir}/features)
+include_directories(${nscalesrcdir}/normalization)
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
 add_library(localLibraries
         lib/MultipleObjectFeatureAnalysisFilter.cxx
         lib/SingleObjectFeatureAnalysisFilter.cxx
@@ -100,6 +121,8 @@ add_library(localLibraries
         lib/ConvertFunctions/IsImageBinary.cpp
         lib/ConvertFunctions/ReadUnknownImageType.cpp
         lib/utilityFeaturesIO.cxx)
+
+add_dependencies(localLibraries nscale-proj1) # make nscale available to cxx
 
 set(Libraries
         localLibraries

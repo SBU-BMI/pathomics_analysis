@@ -9,6 +9,7 @@
 #include "itkImage.h"
 #include "ConvertSlicerToLabel.h"
 
+#define MYTEST
 #include "utilityTileAnalysis.h"
 
 // ITK

@@ -1,17 +1,17 @@
 ################################################################################
 # Include external project nscale
-include(ExternalProject)
+# include(ExternalProject)
 
-ExternalProject_Add(nscale-proj
-        DOWNLOAD_DIR nscale
-        GIT_REPOSITORY https://github.com/SBU-BMI/nscale.git
-        SOURCE_DIR nscale
-        CMAKE_ARGS -DOpenCV_DIR=${OpenCV_DIR}
-        INSTALL_COMMAND ""
-        )
+# ExternalProject_Add(nscale-proj
+#         DOWNLOAD_DIR nscale
+#         GIT_REPOSITORY https://github.com/SBU-BMI/nscale.git
+#         SOURCE_DIR nscale
+#         CMAKE_ARGS -DOpenCV_DIR=${OpenCV_DIR}
+#         INSTALL_COMMAND ""
+#         )
 
-set(nscalesrcdir ${CMAKE_BINARY_DIR}/app/nscale/src)
-set(nscalebuilddir ${CMAKE_BINARY_DIR}/app/nscale-proj-prefix/src/nscale-proj-build)
+# set(nscalesrcdir ${CMAKE_BINARY_DIR}/app/nscale/src)
+# set(nscalebuilddir ${CMAKE_BINARY_DIR}/app/nscale-proj-prefix/src/nscale-proj-build)
 
 #includes
 include_directories(${nscalesrcdir}/segment)
@@ -32,7 +32,7 @@ foreach (item ${list1})
     if (build_${item})
         set(cexx ${item})
         add_executable(${cexx} ${cexx}.cxx)
-        target_link_libraries(${cexx} ${Libraries})
+        target_link_libraries(${cexx} segment featuresAll ${Libraries})
     endif (build_${item})
 endforeach ()
 
@@ -47,6 +47,6 @@ foreach (item ${list2})
         set(cexx ${item})
         add_executable(${cexx} ${cexx}.cxx)
         target_link_libraries(${cexx} segment featuresAll ${Libraries}) # add libs
-        add_dependencies(${cexx} nscale-proj) # make nscale available to cxx
+        add_dependencies(${cexx} nscale-proj1) # make nscale available to cxx
     endif (build_${item})
 endforeach ()
