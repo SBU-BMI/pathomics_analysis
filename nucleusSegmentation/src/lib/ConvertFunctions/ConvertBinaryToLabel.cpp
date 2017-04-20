@@ -14,7 +14,7 @@
 #include "SFLSLocalChanVeseSegmentor2D.h"
 #include "utilityIO.h"
 #include "utilityScalarImage.h"
-//#include "utilityTileAnalysis.h"
+#include "utilityTileAnalysis.h"
 
 using namespace std;
 
