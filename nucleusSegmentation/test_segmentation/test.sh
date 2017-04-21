@@ -13,14 +13,17 @@ error_exit() {
 # Assuming same container name as set in init.sh
 #
 container_name="$USER-test_segmentation"
+containerId="$(docker inspect --format '{{ .Id }}' $container_name)"
 input_file="TCGA-41-3393-01Z-00-DX1_18300_68910_600_600_GBM.png"
+input_dir="/tmp/input"
+output_dir="/tmp/output"
 cwd="$(pwd)"
 
 # Segment image
 test1()
 {
-  exec_id="20170412133151"
   output_file="$cwd/test_out.zip"
+  exec_id="20170412133151"
 
   # Using Python script to run mainSegmentFeatures
   # and copy output from container to local file system.
@@ -30,7 +33,7 @@ test1()
   "$input_file" \
   "$output_file" \
   -t img \
-  -j Y \
+  -j 2 \
   -s 12560,47520 \
   -b 500,500 \
   -d 500,500 \
@@ -42,10 +45,7 @@ test1()
 # Small little test
 test2()
 {
-  input_dir="/tmp/input"
-  output_dir="/tmp/output"
   output_file="$output_dir/output_label.png"
-  containerId="$(docker inspect --format '{{ .Id }}' $container_name)"
 
   echo "Creating input and output dirs"
   docker exec -d "$container_name" mkdir -p "$input_dir"
@@ -57,8 +57,9 @@ test2()
   docker exec "$containerId" ls -lt "$input_dir"
 
   # Using Docker to run mainSegmentSmallImage
+  echo "Running segmentation"
   docker exec -d "$container_name" mainSegmentSmallImage "$input_dir/$input_file" "$output_dir/output" || error_exit "Error running mainSegmentSmallImage"
-  sleep 15
+  sleep 3
   docker exec "$containerId" ls -lt "$output_dir"
   docker cp "$containerId":"$output_file" "$cwd" || error_exit "Could not download output_label.png"
   #while [ ! -f "$(docker exec $containerId ls $output_file)" ] ;
@@ -66,10 +67,42 @@ test2()
   #  echo "sleeping..."
   #  sleep 2
   #done
-  #docker exec "$containerId" ls "$output_dir"  
+  #docker exec "$containerId" ls "$output_dir"
 }
 
-#test1
+# Features
+test3()
+{
+  mydate=$(date +"%m-%d-%Y")
+  file="TCGA-CS-4938-01Z-00-DX1_12560_47520_500_500_LGG"
+
+  input_file1="$file.png"
+  input_file2="$file-mask.png"
+
+  echo "Creating input and output dirs"
+  docker exec -d "$container_name" mkdir -p "$input_dir"
+  docker exec -d "$container_name" mkdir -p "$output_dir"
+
+  echo "Copying input files to docker"
+  docker cp "$input_file1" "$container_name":"$input_dir"
+  docker cp "$input_file2" "$container_name":"$input_dir"
+
+  echo "Computing features"
+  docker exec -d "$container_name" computeFeatures "$input_dir/$input_file1" "$input_dir/$input_file2" Y $output_dir/output_Y_$mydate.csv 12560 47520
+  sleep 3
+  docker cp "$containerId:$output_dir/output_Y_$mydate.csv" .
+
+}
+
+echo "test1"
+test1
+
+echo ""
+echo "test2"
 test2
+
+echo ""
+echo "test3"
+test3
 
 echo "Done."
