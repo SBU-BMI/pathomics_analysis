@@ -47,20 +47,15 @@ test2()
 {
   output_file="$output_dir/output_label.png"
 
-  echo "Creating input and output dirs"
-  docker exec -d "$container_name" mkdir -p "$input_dir"
-  docker exec -d "$container_name" mkdir -p "$output_dir"
-  docker exec "$containerId" ls -lt "/tmp"
-
   echo "Copying input file to docker"
   docker cp "$input_file" "$container_name":"$input_dir"
-  docker exec "$containerId" ls -lt "$input_dir"
+  #docker exec "$containerId" ls -lt "$input_dir"
 
   # Using Docker to run mainSegmentSmallImage
   echo "Running segmentation"
   docker exec -d "$container_name" mainSegmentSmallImage "$input_dir/$input_file" "$output_dir/output" || error_exit "Error running mainSegmentSmallImage"
-  sleep 3
-  docker exec "$containerId" ls -lt "$output_dir"
+  sleep 15
+  #docker exec "$containerId" ls -lt "$output_dir"
   docker cp "$containerId":"$output_file" "$cwd" || error_exit "Could not download output_label.png"
   #while [ ! -f "$(docker exec $containerId ls $output_file)" ] ;
   #do
@@ -79,10 +74,6 @@ test3()
   input_file1="$file.png"
   input_file2="$file-mask.png"
 
-  echo "Creating input and output dirs"
-  docker exec -d "$container_name" mkdir -p "$input_dir"
-  docker exec -d "$container_name" mkdir -p "$output_dir"
-
   echo "Copying input files to docker"
   docker cp "$input_file1" "$container_name":"$input_dir"
   docker cp "$input_file2" "$container_name":"$input_dir"
@@ -94,6 +85,12 @@ test3()
 
 }
 
+echo "Creating input and output dirs"
+docker exec -d "$container_name" mkdir -p "$input_dir"
+docker exec -d "$container_name" mkdir -p "$output_dir"
+#docker exec "$containerId" ls -lt "/tmp"
+
+echo ""
 echo "test1"
 test1
 
