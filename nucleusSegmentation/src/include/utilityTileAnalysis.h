@@ -829,8 +829,6 @@ namespace ImagenomicAnalytics {
             return outputLabelImage;
         }
 
-#ifndef MYTEST
-
         /**
          * Process Tile CV
          * declumpingType:
@@ -875,8 +873,6 @@ namespace ImagenomicAnalytics {
             return binary;
 
         }
-
-#endif
 
     }
 }// namespace
