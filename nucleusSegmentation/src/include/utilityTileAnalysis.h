@@ -447,7 +447,7 @@ namespace ImagenomicAnalytics {
                 cv.doSegmentation();
                 time(&end);
                 double dif = difftime(end, start);
-                printf("Elasped time is %.2lf seconds.\n", dif);
+                std::cout << "Elasped time is " << dif << " seconds.\n" << std::flush;
 
                 std::cout << "after CV\n" << std::flush;
 
@@ -491,9 +491,8 @@ namespace ImagenomicAnalytics {
 
 
             // SEGMENT: Declumping
-            // Here, instead of testing boolean, we are testing an int value.
             if (declumpingType > 0) {
-                if (!ImagenomicAnalytics::ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
+                if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
 
                     // WATERSHED
                     if (declumpingType == 2) {
@@ -648,7 +647,7 @@ namespace ImagenomicAnalytics {
                 cv.doSegmentation();
                 time(&end);
                 double dif = difftime(end, start);
-                printf("Elasped time is %.2lf seconds.\n", dif);
+                std::cout << "Elasped time is " << dif << " seconds.\n" << std::flush;
 
                 std::cout << "after CV\n" << std::flush;
 
@@ -785,7 +784,7 @@ namespace ImagenomicAnalytics {
                 cv.doSegmentation();
                 time(&end);
                 double dif = difftime(end, start);
-                printf("Elasped time is %.2lf seconds.\n", dif);
+                std::cout << "Elasped time is " << dif << " seconds.\n" << std::flush;
 
                 std::cout << "after CV\n" << std::flush;
 
@@ -831,6 +830,7 @@ namespace ImagenomicAnalytics {
         }
 
 #ifndef MYTEST
+
         /**
          * Process Tile CV
          * declumpingType:
@@ -860,7 +860,7 @@ namespace ImagenomicAnalytics {
                                                                        mpp, \
                                                                        msKernel, \
                                                                        levelsetNumberOfIteration,
-                                                                       declumpingType);
+                                                                             declumpingType);
 
             // change pixel values for visualization reasons
             itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
@@ -875,6 +875,7 @@ namespace ImagenomicAnalytics {
             return binary;
 
         }
+
 #endif
 
     }
