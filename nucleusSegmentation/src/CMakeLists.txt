@@ -6,7 +6,6 @@ endif (COMMAND cmake_policy)
 set(projName "pathomicsAnalysis")
 project(${projName})
 
-
 set(CMAKE_C_FLAGS "-std=c99 -fPIC")
 set(CMAKE_CXX_FLAGS " -fPIC")
 
@@ -17,7 +16,6 @@ if (OPENMP_FOUND)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif ()
 
-
 ################################################################################
 # ITK, Should be with ItkVtkGlue
 find_package(ITK)
@@ -25,14 +23,12 @@ if (ITK_FOUND)
     include(${ITK_USE_FILE})
 endif (ITK_FOUND)
 
-
 ################################################################################
 # put all libs together
 set(Libraries
         ${ITK_LIBRARIES}
         ${Libraries}
         )
-
 
 ################################################################################
 # openCV
@@ -43,8 +39,7 @@ set(Libraries
         ${Libraries}
         )
 
-include_directories(${PROJECT_SOURCE_DIR}/include/)
-
+include_directories(${CMAKE_SOURCE_DIR}/include/)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
@@ -74,7 +69,6 @@ if (build_mainTileAndSegmentWSINucleiOutputFeature)
             )
 endif (build_mainTileAndSegmentWSINucleiOutputFeature)
 
-
 ################################################################################
 # put all libs together
 set(Libraries
@@ -82,13 +76,14 @@ set(Libraries
         ${Libraries}
         )
 
-
 ################################################################################
 # build local libraries
 
+################################################################################
+# Include external project nscale
 include(ExternalProject)
 
-ExternalProject_Add(nscale-proj1
+ExternalProject_Add(nscale-proj
         DOWNLOAD_DIR nscale
         GIT_REPOSITORY https://github.com/SBU-BMI/nscale.git
         SOURCE_DIR nscale
@@ -97,14 +92,19 @@ ExternalProject_Add(nscale-proj1
         )
 
 set(nscalesrcdir ${CMAKE_BINARY_DIR}/nscale/src)
-set(nscalebuilddir ${CMAKE_BINARY_DIR}/nscale-proj1-prefix/src/nscale-proj1-build)
+set(nscalebuilddir ${CMAKE_BINARY_DIR}/nscale-proj-prefix/src/nscale-proj-build)
 
+#includes
 include_directories(${nscalesrcdir}/segment)
 include_directories(${nscalesrcdir}/segment/cuda)
 include_directories(${nscalesrcdir}/common)
 include_directories(${nscalesrcdir}/features)
 include_directories(${nscalesrcdir}/normalization)
-include_directories(${PROJECT_SOURCE_DIR}/include)
+
+include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/lib/ConvertFunctions)
+
+link_directories(${nscalebuilddir}/lib)
 
 add_library(localLibraries
         lib/MultipleObjectFeatureAnalysisFilter.cxx
@@ -122,7 +122,7 @@ add_library(localLibraries
         lib/ConvertFunctions/ReadUnknownImageType.cpp
         lib/utilityFeaturesIO.cxx)
 
-add_dependencies(localLibraries nscale-proj1) # make nscale available to cxx
+add_dependencies(localLibraries nscale-proj) # make nscale available to lib
 
 set(Libraries
         localLibraries
