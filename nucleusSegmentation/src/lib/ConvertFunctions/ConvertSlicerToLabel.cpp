@@ -6,14 +6,10 @@
  *=========================================================================*/
 
 // LOCAL
-#include "itkImage.h"
 #include "ConvertSlicerToLabel.h"
-
-#define MYTEST
-#include "utilityTileAnalysis.h"
+#include "utilityScalarImage.h"
 
 // ITK
-#include "itkTypedefs.h"
 #include "BinaryMaskAnalysisFilter.h"
 
 using namespace std;
