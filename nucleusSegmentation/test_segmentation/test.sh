@@ -12,7 +12,7 @@ error_exit() {
 #
 # Assuming same container name as set in init.sh
 #
-container_name="$USER-test_segmentation"
+container_name="$USER-pathomics_analysis"
 containerId="$(docker inspect --format '{{ .Id }}' $container_name)"
 input_file="TCGA-41-3393-01Z-00-DX1_18300_68910_600_600_GBM.png"
 input_dir="/tmp/input"
