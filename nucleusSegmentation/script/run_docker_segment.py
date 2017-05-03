@@ -76,7 +76,7 @@ def run_start(argv):
     if len(argv) > 1:
         run_cmd = "docker run --name " + argv[0] + " -it -d " + argv[1] + " /bin/bash"
     else:
-        run_cmd = "docker run --name " + argv[0] + " -it -d sbubmi/test_segmentation:latest /bin/bash"
+        run_cmd = "docker run --name " + argv[0] + " -it -d sbubmi/pathomics_analysis:latest /bin/bash"
     print run_cmd
     print "Starting docker container."
     subprocess.call(run_cmd, shell=True)
