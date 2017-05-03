@@ -9,8 +9,8 @@ error_exit() {
   exit 1
 }
 
-image_name="sbubmi/test_segmentation"
-container_name="$USER-test_segmentation"
+image_name="sbubmi/pathomics_analysis"
+container_name="$USER-pathomics_analysis"
 
 # Build image from dockerfile
 echo ""
