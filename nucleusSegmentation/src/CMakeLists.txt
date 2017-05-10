@@ -5,6 +5,7 @@ endif (COMMAND cmake_policy)
 
 set(projName "pathomicsAnalysis")
 project(${projName})
+set(CMAKE_BUILD_TYPE Release)
 
 set(CMAKE_C_FLAGS "-std=c99 -fPIC")
 set(CMAKE_CXX_FLAGS " -fPIC")
