@@ -28,6 +28,7 @@
 #include "BinaryMaskAnalysisFilter.h"
 #include "SFLSLocalChanVeseSegmentor2D.h"
 
+
 #include "itkTypedefs.h"
 
 #include "utilityScalarImage.h"
@@ -242,10 +243,10 @@ namespace ImagenomicAnalytics {
         std::vector<typename InputImageType::PixelType>
         computeMultipleThresholdsForGrayScaleImage(typename InputImageType::Pointer inputImage) {
             typedef typename InputImageType::PixelType PixelType;
-            std::vector<PixelType> multipleThresholds;
+            std::vector <PixelType> multipleThresholds;
 
             {
-                typedef itk::HuangThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+                typedef itk::HuangThresholdImageFilter <InputImageType, InputImageType> CalculatorType;
                 typename CalculatorType::Pointer calculator = CalculatorType::New();
                 calculator->SetInput(inputImage);
                 calculator->Update();
@@ -261,7 +262,7 @@ namespace ImagenomicAnalytics {
             /* } */
 
             {
-                typedef itk::IsoDataThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+                typedef itk::IsoDataThresholdImageFilter <InputImageType, InputImageType> CalculatorType;
                 typename CalculatorType::Pointer calculator = CalculatorType::New();
                 calculator->SetInput(inputImage);
                 calculator->Update();
@@ -277,7 +278,7 @@ namespace ImagenomicAnalytics {
             /* } */
 
             {
-                typedef itk::LiThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+                typedef itk::LiThresholdImageFilter <InputImageType, InputImageType> CalculatorType;
                 typename CalculatorType::Pointer calculator = CalculatorType::New();
                 calculator->SetInput(inputImage);
                 calculator->Update();
@@ -285,7 +286,7 @@ namespace ImagenomicAnalytics {
             }
 
             {
-                typedef itk::MaximumEntropyThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+                typedef itk::MaximumEntropyThresholdImageFilter <InputImageType, InputImageType> CalculatorType;
                 typename CalculatorType::Pointer calculator = CalculatorType::New();
                 calculator->SetInput(inputImage);
                 calculator->Update();
@@ -293,7 +294,7 @@ namespace ImagenomicAnalytics {
             }
 
             {
-                typedef itk::MomentsThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+                typedef itk::MomentsThresholdImageFilter <InputImageType, InputImageType> CalculatorType;
                 typename CalculatorType::Pointer calculator = CalculatorType::New();
                 calculator->SetInput(inputImage);
                 calculator->Update();
@@ -301,7 +302,7 @@ namespace ImagenomicAnalytics {
             }
 
             {
-                typedef itk::OtsuThresholdImageFilter<InputImageType, InputImageType, InputImageType> CalculatorType;
+                typedef itk::OtsuThresholdImageFilter <InputImageType, InputImageType, InputImageType> CalculatorType;
                 typename CalculatorType::Pointer calculator = CalculatorType::New();
                 calculator->SetInput(inputImage);
                 calculator->Update();
@@ -309,7 +310,7 @@ namespace ImagenomicAnalytics {
             }
 
             {
-                typedef itk::RenyiEntropyThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+                typedef itk::RenyiEntropyThresholdImageFilter <InputImageType, InputImageType> CalculatorType;
                 typename CalculatorType::Pointer calculator = CalculatorType::New();
                 calculator->SetInput(inputImage);
                 calculator->Update();
@@ -317,7 +318,7 @@ namespace ImagenomicAnalytics {
             }
 
             {
-                typedef itk::ShanbhagThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+                typedef itk::ShanbhagThresholdImageFilter <InputImageType, InputImageType> CalculatorType;
                 typename CalculatorType::Pointer calculator = CalculatorType::New();
                 calculator->SetInput(inputImage);
                 calculator->Update();
@@ -325,7 +326,7 @@ namespace ImagenomicAnalytics {
             }
 
             {
-                typedef itk::TriangleThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+                typedef itk::TriangleThresholdImageFilter <InputImageType, InputImageType> CalculatorType;
                 typename CalculatorType::Pointer calculator = CalculatorType::New();
                 calculator->SetInput(inputImage);
                 calculator->Update();
@@ -333,7 +334,7 @@ namespace ImagenomicAnalytics {
             }
 
             {
-                typedef itk::YenThresholdImageFilter<InputImageType, InputImageType> CalculatorType;
+                typedef itk::YenThresholdImageFilter <InputImageType, InputImageType> CalculatorType;
                 typename CalculatorType::Pointer calculator = CalculatorType::New();
                 calculator->SetInput(inputImage);
                 calculator->Update();
@@ -350,7 +351,7 @@ namespace ImagenomicAnalytics {
                               typename OutputImageType::PixelType maskValue, float &theThreshold) {
             itkFloatImageType::Pointer image = ScalarImage::castItkImage<InputImageType, itkFloatImageType>(inputImage);
 
-            std::vector<itkFloatImageType::PixelType> a = computeMultipleThresholdsForGrayScaleImage<itkFloatImageType>(
+            std::vector <itkFloatImageType::PixelType> a = computeMultipleThresholdsForGrayScaleImage<itkFloatImageType>(
                     image);
             std::sort(a.begin(), a.end());
 
@@ -373,12 +374,6 @@ namespace ImagenomicAnalytics {
             return mask;
         }
 
-        /**
-         * Process Tile
-         * doDeclump:
-         * false = No declumping
-         * true = Mean Shift
-         */
         template<typename TNull>
         itkUCharImageType::Pointer processTile(cv::Mat thisTileCV, \
                          itkUShortImageType::Pointer &outputLabelImageUShort, \
@@ -437,7 +432,7 @@ namespace ImagenomicAnalytics {
                 //int numiter = 100;
                 time_t start, end;
                 time(&start);
-                CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType> cv;
+                CSFLSLocalChanVeseSegmentor2D <itkFloatImageType::PixelType> cv;
                 cv.setImage(hemaFloat);
                 cv.setMask(nucleusBinaryMask);
                 cv.setNumIter(levelsetNumberOfIteration);
@@ -460,19 +455,19 @@ namespace ImagenomicAnalytics {
             }
 
 
-            typedef itk::BinaryFillholeImageFilter<itkBinaryMaskImageType> fhFilterType;
+            typedef itk::BinaryFillholeImageFilter <itkBinaryMaskImageType> fhFilterType;
             fhFilterType::Pointer fhfilter = fhFilterType::New();
             fhfilter->SetInput(nucleusBinaryMask);
             fhfilter->SetForegroundValue(1);
             fhfilter->Update();
 
 
-            typedef itk::ConnectedComponentImageFilter<itkBinaryMaskImageType, itkLabelImageType> ConnectedComponentImageFilterType;
+            typedef itk::ConnectedComponentImageFilter <itkBinaryMaskImageType, itkLabelImageType> ConnectedComponentImageFilterType;
             ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New();
             connected->SetInput(nucleusBinaryMask);
             connected->Update();
 
-            typedef itk::RelabelComponentImageFilter<itkLabelImageType, itkLabelImageType> FilterType;
+            typedef itk::RelabelComponentImageFilter <itkLabelImageType, itkLabelImageType> FilterType;
             FilterType::Pointer relabelFilter = FilterType::New();
             relabelFilter->SetInput(connected->GetOutput());
             relabelFilter->SetMinimumObjectSize(static_cast<FilterType::ObjectSizeType>(sizeThld / mpp / mpp));
@@ -491,39 +486,37 @@ namespace ImagenomicAnalytics {
             // SEGMENT: Declumping
             if (doDeclump) {
                 if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
+                    gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
+                    binaryMaskAnalyzer.setMaskImage(nucleusBinaryMask);
+                    binaryMaskAnalyzer.setObjectSizeThreshold(sizeThld);
+                    binaryMaskAnalyzer.setObjectSizeUpperThreshold(sizeUpperThld);
+                    binaryMaskAnalyzer.setMeanshiftSigma(msKernel);
+                    binaryMaskAnalyzer.setMPP(mpp);
+                    binaryMaskAnalyzer.update();
 
-                // MEAN SHIFT
-                gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
-                binaryMaskAnalyzer.setMaskImage(nucleusBinaryMask);
-                binaryMaskAnalyzer.setObjectSizeThreshold(sizeThld);
-                binaryMaskAnalyzer.setObjectSizeUpperThreshold(sizeUpperThld);
-                binaryMaskAnalyzer.setMeanshiftSigma(msKernel);
-                binaryMaskAnalyzer.setMPP(mpp);
-                binaryMaskAnalyzer.update();
+                    std::cout << "after declumping\n" << std::flush;
 
-                std::cout << "after declumping\n" << std::flush;
+                    itkUIntImageType::Pointer outputLabelImage = binaryMaskAnalyzer.getConnectedComponentLabelImage();
+                    itkUCharImageType::Pointer edgeBetweenLabelsMask = ScalarImage::edgesOfDifferentLabelRegion<char>(
+                            ScalarImage::castItkImage<itkUIntImageType, itkUIntImageType>(
+                                    binaryMaskAnalyzer.getConnectedComponentLabelImage()));
+                    itkUCharImageType::PixelType *edgeBetweenLabelsMaskBufferPointer = edgeBetweenLabelsMask->GetBufferPointer();
 
-                itkUIntImageType::Pointer outputLabelImage = binaryMaskAnalyzer.getConnectedComponentLabelImage();
-                itkUCharImageType::Pointer edgeBetweenLabelsMask = ScalarImage::edgesOfDifferentLabelRegion<char>(
-                        ScalarImage::castItkImage<itkUIntImageType, itkUIntImageType>(
-                                binaryMaskAnalyzer.getConnectedComponentLabelImage()));
-                itkUCharImageType::PixelType *edgeBetweenLabelsMaskBufferPointer = edgeBetweenLabelsMask->GetBufferPointer();
+                    const itkUIntImageType::PixelType *outputLabelImageBufferPointer = outputLabelImage->GetBufferPointer();
 
-                const itkUIntImageType::PixelType *outputLabelImageBufferPointer = outputLabelImage->GetBufferPointer();
+                    itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
 
-                itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
-
-                for (unsigned long it = 0; it < numPixels; ++it) {
-                    nucleusBinaryMaskBufferPointer[it] = outputLabelImageBufferPointer[it] >= 1 ? 1 : 0;
-                    nucleusBinaryMaskBufferPointer[it] *= (1 - edgeBetweenLabelsMaskBufferPointer[it]);
+                    for (unsigned long it = 0; it < numPixels; ++it) {
+                        nucleusBinaryMaskBufferPointer[it] = outputLabelImageBufferPointer[it] >= 1 ? 1 : 0;
+                        nucleusBinaryMaskBufferPointer[it] *= (1 - edgeBetweenLabelsMaskBufferPointer[it]);
+                    }
                 }
-
             }
 
             // SEGMENT: ChanVese again, with numiter = 50.
             if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
                 int numiter = 50;
-                CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType> cv;
+                CSFLSLocalChanVeseSegmentor2D <itkFloatImageType::PixelType> cv;
                 cv.setImage(hemaFloat);
                 cv.setMask(nucleusBinaryMask);
                 cv.setNumIter(numiter);
@@ -560,9 +553,6 @@ namespace ImagenomicAnalytics {
         }
 
 
-        /**
-         * NOT USED.
-         */
         template<typename TNull>
         itkUCharImageType::Pointer processTileOptimalThreshold(cv::Mat thisTileCV, \
                                  itkUShortImageType::Pointer &outputLabelImageUShort, \
@@ -619,7 +609,7 @@ namespace ImagenomicAnalytics {
                 //int numiter = 100;
                 time_t start, end;
                 time(&start);
-                CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType> cv;
+                CSFLSLocalChanVeseSegmentor2D <itkFloatImageType::PixelType> cv;
                 cv.setImage(hemaFloat);
                 cv.setMask(nucleusBinaryMask);
                 cv.setNumIter(levelsetNumberOfIteration);
@@ -673,7 +663,7 @@ namespace ImagenomicAnalytics {
 
             if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
                 int numiter = 50;
-                CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType> cv;
+                CSFLSLocalChanVeseSegmentor2D <itkFloatImageType::PixelType> cv;
                 cv.setImage(hemaFloat);
                 cv.setMask(nucleusBinaryMask);
                 cv.setNumIter(numiter);
@@ -691,7 +681,7 @@ namespace ImagenomicAnalytics {
             }
 
             std::cout << "before ConnectedComponent\n" << std::flush;
-            typedef itk::ConnectedComponentImageFilter<itkUCharImageType, itkUShortImageType> ConnectedComponentImageFilterType;
+            typedef itk::ConnectedComponentImageFilter <itkUCharImageType, itkUShortImageType> ConnectedComponentImageFilterType;
             ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New();
             connected->SetInput(nucleusBinaryMask);
             connected->Update();
@@ -756,7 +746,7 @@ namespace ImagenomicAnalytics {
                 //int numiter = 100;
                 time_t start, end;
                 time(&start);
-                CSFLSLocalChanVeseSegmentor2D<itkFloatImageType::PixelType> cv;
+                CSFLSLocalChanVeseSegmentor2D <itkFloatImageType::PixelType> cv;
                 cv.setImage(hemaFloat);
                 cv.setMask(nucleusBinaryMask);
                 cv.setNumIter(levelsetNumberOfIteration);
@@ -809,9 +799,7 @@ namespace ImagenomicAnalytics {
             return outputLabelImage;
         }
 
-        /**
-         * Process Tile CV
-         */
+
         cv::Mat processTileCV(cv::Mat thisTileCV, \
                           float otsuRatio = 1.0, \
                           double curvatureWeight = 0.8, \
@@ -820,19 +808,18 @@ namespace ImagenomicAnalytics {
                           double mpp = 0.25, \
                           float msKernel = 20.0, \
                           int levelsetNumberOfIteration = 100) {
-
             itkUShortImageType::Pointer outputLabelImage;
 
             // call regular segmentation function
             itkUCharImageType::Pointer nucleusBinaryMask = processTile<char>(thisTileCV, \
-                                                                       outputLabelImage, \
-                                                                       otsuRatio, \
-                                                                       curvatureWeight, \
-                                                                       sizeThld, \
-                                                                       sizeUpperThld, \
-                                                                       mpp, \
-                                                                       msKernel, \
-                                                                       levelsetNumberOfIteration);
+                                     outputLabelImage, \
+                                     otsuRatio, \
+                                     curvatureWeight, \
+                                     sizeThld, \
+                                     sizeUpperThld, \
+                                     mpp, \
+                                     msKernel, \
+                                     levelsetNumberOfIteration);
 
             // change pixel values for visualization reasons
             itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
@@ -843,12 +830,15 @@ namespace ImagenomicAnalytics {
                 }
             }
 
+
             cv::Mat binary = itk::OpenCVImageBridge::ITKImageToCVMat<itkUCharImageType>(nucleusBinaryMask);
             return binary;
 
         }
 
+
     }
 }// namespace
+
 
 #endif
