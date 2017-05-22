@@ -25,7 +25,7 @@
 #include "itkRelabelComponentImageFilter.h"
 
 #include "Normalization.h"
-#include "HistologicalEntities.h"
+//#include "HistologicalEntities.h"
 #include "BinaryMaskAnalysisFilter.h"
 #include "SFLSLocalChanVeseSegmentor2D.h"
 
@@ -376,10 +376,9 @@ namespace ImagenomicAnalytics {
 
         /**
          * Process Tile
-         * declumpingType:
-         * 0 = No declumping
-         * 1 = Mean Shift
-         * 2 = Watershed
+         * doDeclump:
+         * false = No declumping
+         * true = Mean Shift
          */
         template<typename TNull>
         itkUCharImageType::Pointer processTile(cv::Mat thisTileCV, \
@@ -391,7 +390,7 @@ namespace ImagenomicAnalytics {
                          double mpp = 0.25, \
                          float msKernel = 20.0, \
                          int levelsetNumberOfIteration = 100, \
-                         int declumpingType = 0) {
+                         bool doDeclump = false) {
             std::cout << "normalizeImageColor.....\n" << std::flush;
             cv::Mat newImgCV = normalizeImageColor<char>(thisTileCV);
 
@@ -491,50 +490,35 @@ namespace ImagenomicAnalytics {
 
 
             // SEGMENT: Declumping
-            if (declumpingType > 0) {
+            if (doDeclump) {
                 if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
-
-                    // WATERSHED
-                    if (declumpingType == 2) {
-
-                        cv::Mat watershedMask;
-                        cv::Mat seg = itk::OpenCVImageBridge::ITKImageToCVMat<itkUCharImageType>(nucleusBinaryMask);
-
-                        // (img, seg, mask, int minSizePl=30, int watershedConnectivity=8,
-                        // ::cciutils::SimpleCSVLogger *logger = NULL, ::cciutils::cv::IntermediateResultHandler *iresHandler = NULL);
-                        nscale::HistologicalEntities::plSeparateNuclei(newImgCV, seg, watershedMask, 30, 8, NULL, NULL);
-
-                        nucleusBinaryMask = itk::OpenCVImageBridge::CVMatToITKImage<itkUCharImageType>(watershedMask);
-
-                    }
 
                     // MEAN SHIFT
                     if (declumpingType == 1) {
-                        gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
-                        binaryMaskAnalyzer.setMaskImage(nucleusBinaryMask);
-                        binaryMaskAnalyzer.setObjectSizeThreshold(sizeThld);
-                        binaryMaskAnalyzer.setObjectSizeUpperThreshold(sizeUpperThld);
-                        binaryMaskAnalyzer.setMeanshiftSigma(msKernel);
-                        binaryMaskAnalyzer.setMPP(mpp);
-                        // Assumes declumpingType==0
-                        binaryMaskAnalyzer.update();
+                    gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
+                    binaryMaskAnalyzer.setMaskImage(nucleusBinaryMask);
+                    binaryMaskAnalyzer.setObjectSizeThreshold(sizeThld);
+                    binaryMaskAnalyzer.setObjectSizeUpperThreshold(sizeUpperThld);
+                    binaryMaskAnalyzer.setMeanshiftSigma(msKernel);
+                    binaryMaskAnalyzer.setMPP(mpp);
+                    // Assumes declumpingType==0
+                    binaryMaskAnalyzer.update();
 
-                        std::cout << "after declumping\n" << std::flush;
+                    std::cout << "after declumping\n" << std::flush;
 
-                        itkUIntImageType::Pointer outputLabelImage = binaryMaskAnalyzer.getConnectedComponentLabelImage();
-                        itkUCharImageType::Pointer edgeBetweenLabelsMask = ScalarImage::edgesOfDifferentLabelRegion<char>(
-                                ScalarImage::castItkImage<itkUIntImageType, itkUIntImageType>(
-                                        binaryMaskAnalyzer.getConnectedComponentLabelImage()));
-                        itkUCharImageType::PixelType *edgeBetweenLabelsMaskBufferPointer = edgeBetweenLabelsMask->GetBufferPointer();
+                    itkUIntImageType::Pointer outputLabelImage = binaryMaskAnalyzer.getConnectedComponentLabelImage();
+                    itkUCharImageType::Pointer edgeBetweenLabelsMask = ScalarImage::edgesOfDifferentLabelRegion<char>(
+                            ScalarImage::castItkImage<itkUIntImageType, itkUIntImageType>(
+                                    binaryMaskAnalyzer.getConnectedComponentLabelImage()));
+                    itkUCharImageType::PixelType *edgeBetweenLabelsMaskBufferPointer = edgeBetweenLabelsMask->GetBufferPointer();
 
-                        const itkUIntImageType::PixelType *outputLabelImageBufferPointer = outputLabelImage->GetBufferPointer();
+                    const itkUIntImageType::PixelType *outputLabelImageBufferPointer = outputLabelImage->GetBufferPointer();
 
-                        itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+                    itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
 
-                        for (unsigned long it = 0; it < numPixels; ++it) {
-                            nucleusBinaryMaskBufferPointer[it] = outputLabelImageBufferPointer[it] >= 1 ? 1 : 0;
-                            nucleusBinaryMaskBufferPointer[it] *= (1 - edgeBetweenLabelsMaskBufferPointer[it]);
-                        }
+                    for (unsigned long it = 0; it < numPixels; ++it) {
+                        nucleusBinaryMaskBufferPointer[it] = outputLabelImageBufferPointer[it] >= 1 ? 1 : 0;
+                        nucleusBinaryMaskBufferPointer[it] *= (1 - edgeBetweenLabelsMaskBufferPointer[it]);
                     }
 
                 }
@@ -592,7 +576,7 @@ namespace ImagenomicAnalytics {
                                  double mpp = 0.25, \
                                  float msKernel = 20.0, \
                                  int levelsetNumberOfIteration = 100, \
-                                 int declumpingType = 0) {
+                                 bool doDeclump = false) {
             std::cout << "normalizeImageColor.....\n" << std::flush;
             cv::Mat newImgCV = normalizeImageColor<char>(thisTileCV);
 
@@ -661,7 +645,7 @@ namespace ImagenomicAnalytics {
                 }
             }
 
-            if (declumpingType == 1) {
+            if (doDeclump) {
                 if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
                     gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
                     binaryMaskAnalyzer.setMaskImage(nucleusBinaryMask);
@@ -831,10 +815,6 @@ namespace ImagenomicAnalytics {
 
         /**
          * Process Tile CV
-         * declumpingType:
-         * 0 = None
-         * 1 = Mean Shift
-         * 2 = Watershed
          */
         cv::Mat processTileCV(cv::Mat thisTileCV, \
                           float otsuRatio = 1.0, \
@@ -843,8 +823,7 @@ namespace ImagenomicAnalytics {
                           float sizeUpperThld = 200, \
                           double mpp = 0.25, \
                           float msKernel = 20.0, \
-                          int levelsetNumberOfIteration = 100,
-                          int declumpingType = 0) {
+                          int levelsetNumberOfIteration = 100) {
 
             itkUShortImageType::Pointer outputLabelImage;
 
@@ -857,8 +836,7 @@ namespace ImagenomicAnalytics {
                                                                        sizeUpperThld, \
                                                                        mpp, \
                                                                        msKernel, \
-                                                                       levelsetNumberOfIteration,
-                                                                             declumpingType);
+                                                                       levelsetNumberOfIteration);
 
             // change pixel values for visualization reasons
             itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
