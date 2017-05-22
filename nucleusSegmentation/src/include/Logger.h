@@ -16,7 +16,12 @@
 
 #endif
 
-#include <tr1/unordered_map>
+#if( _MSC_VER == 1800 )//MSV2013 has deprecated tr1 namespace
+	#include <unordered_map>
+#else
+	#include <tr1/unordered_map>
+#endif
+
 #include <vector>
 #include <cmath>
 #include <string>
