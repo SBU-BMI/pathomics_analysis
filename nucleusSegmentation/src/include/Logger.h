@@ -8,7 +8,14 @@
 #ifndef _UTILS_LOGGER_H_
 #define _UTILS_LOGGER_H_
 
+#ifdef _MSC_VER
+#include "time_win.h"
+#else
+
 #include <sys/time.h>
+
+#endif
+
 #include <tr1/unordered_map>
 #include <vector>
 #include <cmath>
