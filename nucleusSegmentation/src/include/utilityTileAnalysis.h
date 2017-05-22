@@ -25,7 +25,6 @@
 #include "itkRelabelComponentImageFilter.h"
 
 #include "Normalization.h"
-//#include "HistologicalEntities.h"
 #include "BinaryMaskAnalysisFilter.h"
 #include "SFLSLocalChanVeseSegmentor2D.h"
 
@@ -493,35 +492,32 @@ namespace ImagenomicAnalytics {
             if (doDeclump) {
                 if (!ScalarImage::isImageAllZero<itkBinaryMaskImageType>(nucleusBinaryMask)) {
 
-                    // MEAN SHIFT
-                    if (declumpingType == 1) {
-                    gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
-                    binaryMaskAnalyzer.setMaskImage(nucleusBinaryMask);
-                    binaryMaskAnalyzer.setObjectSizeThreshold(sizeThld);
-                    binaryMaskAnalyzer.setObjectSizeUpperThreshold(sizeUpperThld);
-                    binaryMaskAnalyzer.setMeanshiftSigma(msKernel);
-                    binaryMaskAnalyzer.setMPP(mpp);
-                    // Assumes declumpingType==0
-                    binaryMaskAnalyzer.update();
+                // MEAN SHIFT
+                gth818n::BinaryMaskAnalysisFilter binaryMaskAnalyzer;
+                binaryMaskAnalyzer.setMaskImage(nucleusBinaryMask);
+                binaryMaskAnalyzer.setObjectSizeThreshold(sizeThld);
+                binaryMaskAnalyzer.setObjectSizeUpperThreshold(sizeUpperThld);
+                binaryMaskAnalyzer.setMeanshiftSigma(msKernel);
+                binaryMaskAnalyzer.setMPP(mpp);
+                binaryMaskAnalyzer.update();
 
-                    std::cout << "after declumping\n" << std::flush;
+                std::cout << "after declumping\n" << std::flush;
 
-                    itkUIntImageType::Pointer outputLabelImage = binaryMaskAnalyzer.getConnectedComponentLabelImage();
-                    itkUCharImageType::Pointer edgeBetweenLabelsMask = ScalarImage::edgesOfDifferentLabelRegion<char>(
-                            ScalarImage::castItkImage<itkUIntImageType, itkUIntImageType>(
-                                    binaryMaskAnalyzer.getConnectedComponentLabelImage()));
-                    itkUCharImageType::PixelType *edgeBetweenLabelsMaskBufferPointer = edgeBetweenLabelsMask->GetBufferPointer();
+                itkUIntImageType::Pointer outputLabelImage = binaryMaskAnalyzer.getConnectedComponentLabelImage();
+                itkUCharImageType::Pointer edgeBetweenLabelsMask = ScalarImage::edgesOfDifferentLabelRegion<char>(
+                        ScalarImage::castItkImage<itkUIntImageType, itkUIntImageType>(
+                                binaryMaskAnalyzer.getConnectedComponentLabelImage()));
+                itkUCharImageType::PixelType *edgeBetweenLabelsMaskBufferPointer = edgeBetweenLabelsMask->GetBufferPointer();
 
-                    const itkUIntImageType::PixelType *outputLabelImageBufferPointer = outputLabelImage->GetBufferPointer();
+                const itkUIntImageType::PixelType *outputLabelImageBufferPointer = outputLabelImage->GetBufferPointer();
 
-                    itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
+                itkUCharImageType::PixelType *nucleusBinaryMaskBufferPointer = nucleusBinaryMask->GetBufferPointer();
 
-                    for (unsigned long it = 0; it < numPixels; ++it) {
-                        nucleusBinaryMaskBufferPointer[it] = outputLabelImageBufferPointer[it] >= 1 ? 1 : 0;
-                        nucleusBinaryMaskBufferPointer[it] *= (1 - edgeBetweenLabelsMaskBufferPointer[it]);
-                    }
-
+                for (unsigned long it = 0; it < numPixels; ++it) {
+                    nucleusBinaryMaskBufferPointer[it] = outputLabelImageBufferPointer[it] >= 1 ? 1 : 0;
+                    nucleusBinaryMaskBufferPointer[it] *= (1 - edgeBetweenLabelsMaskBufferPointer[it]);
                 }
+
             }
 
             // SEGMENT: ChanVese again, with numiter = 50.
