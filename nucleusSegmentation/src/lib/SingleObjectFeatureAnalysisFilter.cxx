@@ -90,10 +90,10 @@ namespace ImagenomicAnalytics
 
     //--------------------------------------------------------------------------------
     // These are computed by ITK Label Shape Filter
-    m_featureNames.push_back("BoundingBoxTopLeftX");
-    m_featureNames.push_back("BoundingBoxTopLeftY");
-    m_featureNames.push_back("BoundingBoxBottomRightX");
-    m_featureNames.push_back("BoundingBoxBottomRightY");
+    //m_featureNames.push_back("BoundingBoxTopLeftX");
+    //m_featureNames.push_back("BoundingBoxTopLeftY");
+    //m_featureNames.push_back("BoundingBoxBottomRightX");
+    //m_featureNames.push_back("BoundingBoxBottomRightY");
     m_featureNames.push_back("NumberOfPixels");
     m_featureNames.push_back("PhysicalSize");
     m_featureNames.push_back("NumberOfPixelsOnBorder");
@@ -218,10 +218,10 @@ namespace ImagenomicAnalytics
 
         //morphologyFeatures[featureIndex++] = labelObject->GetLabel();
 
-        morphologyFeatures.push_back(topLeftX);
-        morphologyFeatures.push_back(topLeftY);
-        morphologyFeatures.push_back(bottomRightX);
-        morphologyFeatures.push_back(bottomRightY);
+        //morphologyFeatures.push_back(topLeftX);
+        //morphologyFeatures.push_back(topLeftY);
+        //morphologyFeatures.push_back(bottomRightX);
+        //morphologyFeatures.push_back(bottomRightY);
         morphologyFeatures.push_back(labelObject->GetNumberOfPixels());
         morphologyFeatures.push_back(labelObject->GetPhysicalSize());
         morphologyFeatures.push_back(labelObject->GetNumberOfPixelsOnBorder());

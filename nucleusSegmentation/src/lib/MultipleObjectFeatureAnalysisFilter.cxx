@@ -20,7 +20,9 @@ namespace ImagenomicAnalytics {
     void MultipleObjectFeatureAnalysisFilter::update() {
         //m_outputStream << "Computing features....\n" << std::flush;
 
-        m_objectLabelImage = ScalarImage::binaryImageToConnectedComponentLabelImage<char>(m_binaryObjectMask);
+        if (m_labelComputed == 0) {
+            m_objectLabelImage = ScalarImage::binaryImageToConnectedComponentLabelImage<char>(m_binaryObjectMask);
+        }
 
         _computeFeaturesForAllObjects();
 
@@ -217,6 +219,7 @@ namespace ImagenomicAnalytics {
         m_RGBImage = 0;
         m_binaryObjectMask = 0;
         m_objectLabelImage = 0;
+        m_labelComputed = 0;
 
         m_TopLeftX = 0;
         m_TopLeftY = 0;

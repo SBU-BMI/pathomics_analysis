@@ -25,7 +25,7 @@ void printParseError(char *argv[]) {
               << "   -l <sizeLowerThld>" << std::endl
               << "   -u <sizeUpperThld>" << std::endl
               << "   -k <msKernel>" << std::endl
-              << "   -j <doDeclump: Y or N>" << std::endl
+              << "   -j <declumpingType: 0=None | 1=MeanShift | 2=Watershed>" << std::endl
               << "   -n <levelsetNumberOfIterations>" << std::endl
               << "   -m <mpp>" << std::endl
               << "   -e <analysis desc: string>" << std::endl
@@ -59,7 +59,7 @@ void printInputParameters(InputParameters *inpParams) {
     std::cout << "min_size: " << inpParams->sizeLowerThld << std::endl;
     std::cout << "max_size: " << inpParams->sizeUpperThld << std::endl;
     std::cout << "ms_kernel: " << inpParams->msKernel << std::endl;
-    std::cout << "doDeclump: " << inpParams->doDeclump << std::endl;
+    std::cout << "declump_type: " << inpParams->declumpingType << std::endl;
     std::cout << "levelset_num_iters: " << inpParams->levelsetNumberOfIteration << std::endl;
     std::cout << "tile_minx: " << inpParams->topLeftX << " tile_miny: " << inpParams->topLeftY << std::endl;
     std::cout << "tile_width: " << inpParams->sizeX << " tile_height: " << inpParams->sizeY << std::endl;
@@ -99,7 +99,7 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams) {
     inpParams->sizeLowerThld = 3.0;
     inpParams->sizeUpperThld = 200.0;
     inpParams->msKernel = 20.0;
-    inpParams->doDeclump = false;
+    inpParams->declumpingType = 0;
     inpParams->levelsetNumberOfIteration = 100;
     inpParams->topLeftX = 0;
     inpParams->topLeftY = 0;
@@ -190,10 +190,16 @@ int parseInputParameters(int argc, char **argv, InputParameters *inpParams) {
                 inpParams->msKernel = atof(optarg);
                 break;
             case 'j': {
-                if (!strcmp(optarg, "Y")) {
-                    inpParams -> doDeclump = true;
-                } else {
-                    inpParams -> doDeclump = false;
+                // Check alpha or numeric
+                std::string temp = strdup(optarg);
+                if (isalpha(temp[0]))
+                {
+                    fprintf(stderr, "ERROR: Option -j should be integer [ 0 | 1 | 2 ] value.\n");
+                    return 1;
+                }
+                else
+                {
+                    inpParams->declumpingType = atoi(optarg);
                 }
                 break;
             }

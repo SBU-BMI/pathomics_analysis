@@ -27,7 +27,7 @@ typedef struct _InputParameters {
     float sizeLowerThld;
     float sizeUpperThld;
     float msKernel;
-    bool doDeclump;
+    int declumpingType;
     int64_t levelsetNumberOfIteration;
     int64_t topLeftX, topLeftY;
     int64_t sizeX, sizeY;

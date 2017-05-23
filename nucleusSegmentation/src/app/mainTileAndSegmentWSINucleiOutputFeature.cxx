@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 {
   if (argc < 4)
     {
-      std::cerr<<"Parameters: imageName outputPrefix tileSize [otsuRatio = 1.0] [curvatureWeight = 0.8] [sizeThld = 3] [sizeUpperThld = 200] [msKernel = 20.0] [doDeclump = 0]\n";
+      std::cerr<<"Parameters: imageName outputPrefix tileSize [otsuRatio = 1.0] [curvatureWeight = 0.8] [sizeThld = 3] [sizeUpperThld = 200] [msKernel = 20.0] [declumpingType = 0]\n";
       exit(-1);
     }
 
@@ -108,11 +108,11 @@ int main(int argc, char **argv)
       msKernel = atof(argv[8]);
     }
 
-  bool doDeclump = false;
+  int declumpingType;
   if (argc > 9)
     {
       int tmp = atoi(argv[9]);
-      doDeclump = (tmp == 0?false:true);
+      declumpingType = tmp;
     }
 
 
@@ -188,7 +188,7 @@ int main(int argc, char **argv)
       itkUShortImageType::Pointer outputLabelImageUShort = itkUShortImageType::New();
       itkUCharImageType::Pointer nucleusBinaryMask = ImagenomicAnalytics::TileAnalysis::processTile<char>(thisTile, outputLabelImageUShort, \
                                                                                                           otsuRatio, curvatureWeight, sizeThld, sizeUpperThld, \
-                                                                                                          mpp, msKernel, doDeclump);
+                                                                                                          mpp, msKernel, declumpingType);
 
       // cv::Mat binary = itk::OpenCVImageBridge::ITKImageToCVMat< itkUCharImageType >( nucleusBinaryMask  );
       // cv::Mat outputLabelImageMat = itk::OpenCVImageBridge::ITKImageToCVMat< itkUShortImageType >( outputLabelImageUShort  );

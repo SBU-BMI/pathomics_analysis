@@ -17,6 +17,7 @@ RUN make -j4
 
 # Copy executables
 RUN cp app/main* /usr/local/bin/.
+RUN cp app/computeFeatures* /usr/local/bin/.
 
 # Copy script
 RUN cp ../script/mainAggregateFeatures.py  /usr/local/bin/.

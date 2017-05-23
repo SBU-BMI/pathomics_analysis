@@ -49,7 +49,7 @@ def print_help_segment():
     print '          -l <sizeLowerThld> '
     print '          -u <sizeUpperThld> '
     print '          -k <msKernel> '
-    print '          -j <doDeclump: Y or N> '
+    print '          -j <declumpingType: 0=None | 1=MeanShift | 2=Watershed> '
     print '          -n <levelsetNumberOfIterations> '
     print '          -m <mpp> '
     print '          -e <analysis desc: string> '
@@ -76,7 +76,7 @@ def run_start(argv):
     if len(argv) > 1:
         run_cmd = "docker run --name " + argv[0] + " -it -d " + argv[1] + " /bin/bash"
     else:
-        run_cmd = "docker run --name " + argv[0] + " -it -d sbubmi/test_segmentation:latest /bin/bash"
+        run_cmd = "docker run --name " + argv[0] + " -it -d sbubmi/pathomics_analysis:1.0.0rc0 /bin/bash"
     print run_cmd
     print "Starting docker container."
     subprocess.call(run_cmd, shell=True)

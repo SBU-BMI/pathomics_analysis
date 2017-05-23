@@ -307,5 +307,3 @@ namespace nscale {
     template Mat PixelOperations::replace<int>(const Mat &, int oldval, int newval);
 
 }
-
-

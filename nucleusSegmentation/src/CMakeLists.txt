@@ -5,7 +5,7 @@ endif (COMMAND cmake_policy)
 
 set(projName "pathomicsAnalysis")
 project(${projName})
-
+set(CMAKE_BUILD_TYPE Release)
 
 set(CMAKE_C_FLAGS "-std=c99 -fPIC")
 set(CMAKE_CXX_FLAGS " -fPIC")
@@ -17,7 +17,6 @@ if (OPENMP_FOUND)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif ()
 
-
 ################################################################################
 # ITK, Should be with ItkVtkGlue
 find_package(ITK)
@@ -25,14 +24,12 @@ if (ITK_FOUND)
     include(${ITK_USE_FILE})
 endif (ITK_FOUND)
 
-
 ################################################################################
 # put all libs together
 set(Libraries
         ${ITK_LIBRARIES}
         ${Libraries}
         )
-
 
 ################################################################################
 # openCV
@@ -43,8 +40,7 @@ set(Libraries
         ${Libraries}
         )
 
-include_directories(${PROJECT_SOURCE_DIR}/include/)
-
+include_directories(${CMAKE_SOURCE_DIR}/include/)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
@@ -56,7 +52,6 @@ if (HAVE_GLIB)
             ${Libraries}
             )
 endif (HAVE_GLIB)
-
 
 option(build_mainTileAndSegmentWSINucleiOutputFeature "build mainTileAndSegmentWSINucleiOutputFeature?" ON)
 
@@ -75,7 +70,6 @@ if (build_mainTileAndSegmentWSINucleiOutputFeature)
             )
 endif (build_mainTileAndSegmentWSINucleiOutputFeature)
 
-
 ################################################################################
 # put all libs together
 set(Libraries
@@ -83,9 +77,36 @@ set(Libraries
         ${Libraries}
         )
 
-
 ################################################################################
 # build local libraries
+
+################################################################################
+# Include external project nscale
+include(ExternalProject)
+
+ExternalProject_Add(nscale-proj
+        DOWNLOAD_DIR nscale
+        GIT_REPOSITORY https://github.com/SBU-BMI/nscale.git
+        SOURCE_DIR nscale
+        CMAKE_ARGS -DOpenCV_DIR=${OpenCV_DIR}
+        INSTALL_COMMAND ""
+        )
+
+set(nscalesrcdir ${CMAKE_BINARY_DIR}/nscale/src)
+set(nscalebuilddir ${CMAKE_BINARY_DIR}/nscale-proj-prefix/src/nscale-proj-build)
+
+#includes
+include_directories(${nscalesrcdir}/segment)
+include_directories(${nscalesrcdir}/segment/cuda)
+include_directories(${nscalesrcdir}/common)
+include_directories(${nscalesrcdir}/features)
+include_directories(${nscalesrcdir}/normalization)
+
+include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/lib/ConvertFunctions)
+
+link_directories(${nscalebuilddir}/lib)
+
 add_library(localLibraries
         lib/MultipleObjectFeatureAnalysisFilter.cxx
         lib/SingleObjectFeatureAnalysisFilter.cxx
@@ -93,7 +114,16 @@ add_library(localLibraries
         lib/InputParameters.cxx
         lib/Normalization.cpp
         lib/PixelOperations.cpp
-        lib/Logger.cpp)
+        lib/Logger.cpp
+        lib/ConvertFunctions/ConvertBinaryToLabel.cpp
+        lib/ConvertFunctions/ConvertLabelToCvMat.cpp
+        lib/ConvertFunctions/ConvertRGBToLabel.cpp
+        lib/ConvertFunctions/ConvertSlicerToLabel.cpp
+        lib/ConvertFunctions/IsImageBinary.cpp
+        lib/ConvertFunctions/ReadUnknownImageType.cpp
+        lib/utilityFeaturesIO.cxx)
+
+add_dependencies(localLibraries nscale-proj) # make nscale available to lib
 
 set(Libraries
         localLibraries
