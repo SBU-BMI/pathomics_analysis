@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <time.h>       /* time */
 
+#include <sys/time.h>
+
 #ifdef ADD_UUID
 #include <uuid/uuid.h>
 #endif
@@ -314,32 +316,6 @@ int writeAnalysisParametersCSV(std::string outFilePrefix, AnalysisParameters *an
     return 0;
 }
 
-#if 0
-#define SKIP_BBOX 4 // do not output the bounding box info -- it is computed while loading to the database
-
-int writeFeatureCSV(std::string outFilePrefix, std::vector<std::vector<FeatureValueType> > &features) {
-    std::ostringstream oss;
-    oss << outFilePrefix << "-features.csv";
-    std::ofstream outputFeatureFile(oss.str().c_str());
-    int i;
-    for (i = SKIP_BBOX; i < _numOfFeatures - 1; i++)
-        outputFeatureFile << _featureNames[i] << ",";
-    outputFeatureFile << _featureNames[i] << std::endl;
-
-    std::size_t iObject, iFeature;
-    for (iObject = 0; iObject < features.size(); ++iObject) {
-        for (iFeature = SKIP_BBOX; iFeature < _numOfFeatures - 1; ++iFeature)
-            outputFeatureFile << features[iObject][iFeature] << ",";
-        outputFeatureFile << "[";
-        for (; iFeature < features[iObject].size() - 1; ++iFeature) {
-            outputFeatureFile << features[iObject][iFeature] << ":";
-        }
-        outputFeatureFile << features[iObject][iFeature] << "]" << std::endl << std::flush;
-    }
-    outputFeatureFile.close();
-}
-#endif
-
 /**
  * Write feature values, including Polygon data.
  * Combined = Yi's and Jun's features.
@@ -417,6 +393,8 @@ inline std::string getRandomIDString() {
  * @param inpParams
  * @return
  */
+int omp_get_thread_num();
+int omp_get_num_threads();
 int segmentWSI(InputParameters *inpParams) {
     // Read whole slide image using OpenSlide.
     openslide_t *osr = openslide_open(inpParams->inpFile.c_str());
@@ -459,7 +437,13 @@ int segmentWSI(InputParameters *inpParams) {
                                                                          tileSizeY);
     std::size_t numberOfTiles = tileSizeY.size();
 
-#pragma omp parallel for
+#pragma omp parallel
+    {
+	printf("THREADS: %d %d\n",omp_get_thread_num(),omp_get_num_threads());
+        fflush(stdout);
+    }
+
+#pragma omp parallel for schedule(dynamic)
     for (std::size_t iTile = 0; iTile < numberOfTiles; ++iTile) {
         int64_t topLeftX = tileTopleftX[iTile];
         int64_t topLeftY = tileTopleftY[iTile];
@@ -495,15 +479,22 @@ int segmentWSI(InputParameters *inpParams) {
 
         analysisParams.outFilePrefix = outFilePrefix.str();
 
+        struct timeval rs,re,ps,pe,ws,we;
+
+        gettimeofday(&rs,NULL);
         cv::Mat thisTile;
-#pragma omp critical
+
+// #pragma omp critical
         {
             thisTile = ImagenomicAnalytics::WholeSlideProcessing::extractTileFromWSI<char>(osr, levelOfLargestSize,
                                                                                            topLeftX, topLeftY, sizeX,
                                                                                            sizeY);
         }
-        itkRGBImageType::Pointer thisTileItk = itk::OpenCVImageBridge::CVMatToITKImage<itkRGBImageType>(thisTile);
 
+        itkRGBImageType::Pointer thisTileItk = itk::OpenCVImageBridge::CVMatToITKImage<itkRGBImageType>(thisTile);
+        gettimeofday(&re,NULL);
+
+        gettimeofday(&ps,NULL);
         itkUShortImageType::Pointer outputLabelImageUShort = itkUShortImageType::New();
         // Segment the image
         itkUCharImageType::Pointer nucleusBinaryMask = ImagenomicAnalytics::TileAnalysis::processTile<char>(thisTile,
@@ -516,8 +507,7 @@ int segmentWSI(InputParameters *inpParams) {
                                                                                                             inpParams->msKernel,
                                                                                                             inpParams->levelsetNumberOfIteration,
                                                                                                             inpParams->declumpingType);
-
-#pragma omp critical
+// #pragma omp critical
         {
             // Output original
             if (inpParams->outputLevel >= MASK_IMG) {
@@ -542,18 +532,6 @@ int segmentWSI(InputParameters *inpParams) {
                 ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(overlay, oss.str().c_str(), 0);
             }
         }
-
-
-#if 0
-        // Compute features
-        ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
-        featureAnalyzer.setInputRGBImage(thisTileItk);
-        featureAnalyzer.setObjectBinaryMask(nucleusBinaryMask);
-        featureAnalyzer.setTopLeft(topLeftX, topLeftY);
-        featureAnalyzer.update();
-
-        std::vector<std::vector<FeatureValueType> > features = featureAnalyzer.getFeatures();
-#endif
 
 #define yi_features
 #define jun_features
@@ -588,7 +566,7 @@ int segmentWSI(InputParameters *inpParams) {
             exit(-1);
         }
 
-        cout << "COMP COUNT: " << nucleiData.getNumberOfNuclei() << endl;
+        // cout << "COMP COUNT: " << nucleiData.getNumberOfNuclei() << endl;
 
         if (nucleiData.getNumberOfNuclei() > 0) {
             nucleiData.extractPolygonsFromLabeledMask(labeledMask);
@@ -600,8 +578,11 @@ int segmentWSI(InputParameters *inpParams) {
         std::vector<std::vector<double> > junFeatureValues = nucleiData.getFeatureValuesVector();
 
 #endif
+        gettimeofday(&pe,NULL);
 
-#pragma omp critical
+        gettimeofday(&ws,NULL);
+
+// #pragma omp critical
         {
             // Write features
             writeCombinedFeatureCSV(outPathPrefix.str(), inpParams, analysisParams.patchMinX, analysisParams.patchMinY,
@@ -610,6 +591,16 @@ int segmentWSI(InputParameters *inpParams) {
             writeAnalysisParametersJSON(outPathPrefix.str(), &analysisParams);
             writeAnalysisParametersCSV(outPathPrefix.str(), &analysisParams);
         }
+
+        gettimeofday(&we,NULL);
+
+        double rt = (double)((re.tv_sec * 1000000 + re.tv_usec) - (rs.tv_sec * 1000000 + rs.tv_usec));
+        double pt = (double)((pe.tv_sec * 1000000 + pe.tv_usec) - (ps.tv_sec * 1000000 + ps.tv_usec));
+        double wt = (double)((we.tv_sec * 1000000 + we.tv_usec) - (ws.tv_sec * 1000000 + ws.tv_usec));
+
+        printf("TIME: %d (%d,%d) r: %lf p: %lf w: %lf\n",omp_get_thread_num(),(int)topLeftX,(int)topLeftY,rt/1000000.0,pt/1000000.0,wt/1000000.0);
+	fflush(stdout);
+
     }
 
 #pragma omp barrier
@@ -919,7 +910,7 @@ int compressTiles(InputParameters *inpParams) {
  */
 int segmentTiles(InputParameters *inpParams, PatchList *patchList) {
 
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic)
     for (std::size_t iPatch = 0; iPatch < patchList->patchCount; iPatch++) {
         PatchInfo patchInfo = patchList->patches[iPatch];
         std::string fileName = patchInfo.inpFile;
