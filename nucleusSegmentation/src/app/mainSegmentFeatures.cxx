@@ -12,7 +12,13 @@
 #include <unistd.h>
 #include <time.h>       /* time */
 
+#ifdef _MSC_VER
+#include "time_win.h"
+#else
+
 #include <sys/time.h>
+
+#endif
 
 #ifdef ADD_UUID
 #include <uuid/uuid.h>
