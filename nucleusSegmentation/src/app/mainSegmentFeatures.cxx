@@ -51,35 +51,6 @@
 #include "ImageRegionNucleiData.h"
 #include "ConvertLabelToCvMat.h"
 
-const int _numOfFeatures = 21;
-const std::string _featureNames[] = {
-        // "BoundingBoxTopLeftX",
-        // "BoundingBoxTopLeftY",
-        // "BoundingBoxBottomRightX",
-        // "BoundingBoxBottomRightY",
-        "NumberOfPixels",
-        "PhysicalSize",
-        "NumberOfPixelsOnBorder",
-        "FeretDiameter",
-        "PrincipalMoments0",
-        "PrincipalMoments1",
-        "Elongation",
-        "Perimeter",
-        "Roundness",
-        "EquivalentSphericalRadius",
-        "EquivalentSphericalPerimeter",
-        "EquivalentEllipsoidDiameter0",
-        "EquivalentEllipsoidDiameter1",
-        "Flatness",
-        "MeanR",
-        "MeanG",
-        "MeanB",
-        "StdR",
-        "StdG",
-        "StdB",
-        "Polygon"
-};
-
 typedef struct _PatchInfo {
     std::string inpFile;
     std::string outFolder;
@@ -336,7 +307,8 @@ int writeCombinedFeatureCSV(std::string outFilePrefix, InputParameters *inpParam
     std::ofstream outputFeatureFile(outputFeatureName);
 
     // write the header
-    int junFeaturesLength = junFeatureNames.size();
+    // the last feature in Jun's list is object ID. No need to output it
+    int junFeaturesLength = junFeatureNames.size() - 1;
     for (int i = 0; i < junFeaturesLength; i++) {
         outputFeatureFile << junFeatureNames[i] << ",";
     }
@@ -352,16 +324,16 @@ int writeCombinedFeatureCSV(std::string outFilePrefix, InputParameters *inpParam
     for (int i = 0; i < junFeatureValues.size(); i++) {
 
         // output Jun's features
-        for (int j = 0; j < junFeaturesLength; j++) {
+        for (int j = 0; j < junFeaturesLength; j++) {  
             outputFeatureFile << junFeatureValues[i][j] << ",";
         }
 
-        // output Yi's non-polygon features
+        // output Yi's features
         for (int j = 0; j < yiFeaturesLength - 1; j++) {
             outputFeatureFile << yiFeatureValues[i][j] << ",";
         }
 
-        // output Yi's polygon features
+        // output polygon boundary 
         outputFeatureFile << "[";
         for (std::size_t itPolygon = yiFeaturesLength - 1; itPolygon < yiFeatureValues[i].size() - 1; ++itPolygon) {
             outputFeatureFile << yiFeatureValues[i][itPolygon] << ":";
@@ -384,7 +356,10 @@ inline std::string generateUUIDString()
 #endif
 
 inline void initRandom() {
-    srand(time(NULL));
+    struct timeval t1;
+    gettimeofday(&t1,NULL);
+    long tv = (t1.tv_sec*1000000+t1.tv_usec);
+    srand(tv);
 }
 
 inline std::string getRandomIDString() {
@@ -445,7 +420,7 @@ int segmentWSI(InputParameters *inpParams) {
 
 #pragma omp parallel
     {
-	printf("THREADS: %d %d\n",omp_get_thread_num(),omp_get_num_threads());
+		printf("THREADS: %d %d\n",omp_get_thread_num(),omp_get_num_threads());
         fflush(stdout);
     }
 
@@ -490,12 +465,9 @@ int segmentWSI(InputParameters *inpParams) {
         gettimeofday(&rs,NULL);
         cv::Mat thisTile;
 
-// #pragma omp critical
-        {
-            thisTile = ImagenomicAnalytics::WholeSlideProcessing::extractTileFromWSI<char>(osr, levelOfLargestSize,
-                                                                                           topLeftX, topLeftY, sizeX,
-                                                                                           sizeY);
-        }
+        thisTile = ImagenomicAnalytics::WholeSlideProcessing::extractTileFromWSI<char>(osr, levelOfLargestSize,
+                                                                                       topLeftX, topLeftY, sizeX,
+                                                                                       sizeY);
 
         itkRGBImageType::Pointer thisTileItk = itk::OpenCVImageBridge::CVMatToITKImage<itkRGBImageType>(thisTile);
         gettimeofday(&re,NULL);
@@ -513,8 +485,58 @@ int segmentWSI(InputParameters *inpParams) {
                                                                                                             inpParams->msKernel,
                                                                                                             inpParams->levelsetNumberOfIteration,
                                                                                                             inpParams->declumpingType);
-// #pragma omp critical
-        {
+
+        // Compute features
+		// Yi's features
+        itkLabelImageType::Pointer labelImage = 
+					ImagenomicAnalytics::ScalarImage::binaryImageToConnectedComponentLabelImage<char>(nucleusBinaryMask);
+
+        ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
+        featureAnalyzer.setInputRGBImage(thisTileItk);
+        featureAnalyzer.setObjectLabeledMask(labelImage);
+        featureAnalyzer.setTopLeft(analysisParams.patchMinX, analysisParams.patchMinY);
+		featureAnalyzer.setMpp((double)analysisParams.mpp);
+        featureAnalyzer.setFeatureNames();
+        featureAnalyzer.update();
+
+        std::vector<std::vector<FeatureValueType> > yiFeatureValues = featureAnalyzer.getFeatures();
+        std::vector<std::string> yiFeatureNames = featureAnalyzer.getFeatureNames();
+
+		// Jun's features
+        ImageRegionNucleiData nucleiData(0, 0, thisTile.cols - 1, thisTile.rows - 1);
+        Mat_<int> labeledMask = label2CvMat(labelImage);
+        nucleiData.extractBoundingBoxesFromLabeledMask(labeledMask);
+
+        if (yiFeatureValues.size() != nucleiData.getNumberOfNuclei()) {
+            fprintf(stderr, "the sizes of Yi's and Jun's feature sets do not match: %lu != %d\n",
+                    yiFeatureValues.size(), nucleiData.getNumberOfNuclei());
+            exit(-1);
+        }
+
+        // cout << "COMP COUNT: " << nucleiData.getNumberOfNuclei() << endl;
+
+        if (nucleiData.getNumberOfNuclei() > 0) {
+            nucleiData.extractPolygonsFromLabeledMask(labeledMask);
+            nucleiData.extractCytoplasmRegions(labeledMask);
+            nucleiData.computeShapeFeatures(labeledMask);
+            nucleiData.computeRedBlueChannelTextureFeatures(thisTile, labeledMask);
+        }
+        std::vector<std::string> junFeatureNames = nucleiData.getFeatureNamesVector();
+        std::vector<std::vector<double> > junFeatureValues = nucleiData.getFeatureValuesVector();
+
+        gettimeofday(&pe,NULL);
+        gettimeofday(&ws,NULL);
+
+		// Output data if there are segmentation results
+		if (nucleiData.getNumberOfNuclei() > 0) {
+           	// Write features
+           	writeCombinedFeatureCSV(outPathPrefix.str(), inpParams, analysisParams.patchMinX, analysisParams.patchMinY,
+								yiFeatureNames, yiFeatureValues, junFeatureNames, junFeatureValues);
+           	// Write analysis parameters
+           	writeAnalysisParametersJSON(outPathPrefix.str(), &analysisParams);
+           	writeAnalysisParametersCSV(outPathPrefix.str(), &analysisParams);
+
+			// Write mask and overlay images
             // Output original
             if (inpParams->outputLevel >= MASK_IMG) {
                 std::ostringstream oss;
@@ -537,66 +559,7 @@ int segmentWSI(InputParameters *inpParams) {
                         thisTileItk, nucleusBinaryMask);
                 ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(overlay, oss.str().c_str(), 0);
             }
-        }
-
-#define yi_features
-#define jun_features
-#ifdef yi_features
-
-        itkLabelImageType::Pointer labelImage = ImagenomicAnalytics::ScalarImage::binaryImageToConnectedComponentLabelImage<char>(
-                nucleusBinaryMask);
-
-        ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
-        featureAnalyzer.setInputRGBImage(thisTileItk);
-        featureAnalyzer.setObjectLabeledMask(labelImage);
-        featureAnalyzer.setTopLeft(analysisParams.patchMinX, analysisParams.patchMinY);
-        featureAnalyzer.setFeatureNames();
-        featureAnalyzer.update();
-
-        std::vector<std::vector<FeatureValueType> > yiFeatureValues = featureAnalyzer.getFeatures();
-        std::vector<std::string> yiFeatureNames = featureAnalyzer.getFeatureNames();
-
-#endif
-
-#ifdef jun_features
-
-        ImageRegionNucleiData nucleiData(0, 0, thisTile.cols - 1, thisTile.rows - 1);
-
-        Mat_<int> labeledMask = label2CvMat(labelImage);
-
-        nucleiData.extractBoundingBoxesFromLabeledMask(labeledMask);
-
-        if (yiFeatureValues.size() != nucleiData.getNumberOfNuclei()) {
-            fprintf(stderr, "the sizes of Yi's and Jun's feature sets do not match: %lu != %d\n",
-                    yiFeatureValues.size(), nucleiData.getNumberOfNuclei());
-            exit(-1);
-        }
-
-        // cout << "COMP COUNT: " << nucleiData.getNumberOfNuclei() << endl;
-
-        if (nucleiData.getNumberOfNuclei() > 0) {
-            nucleiData.extractPolygonsFromLabeledMask(labeledMask);
-            nucleiData.extractCytoplasmRegions(labeledMask);
-            nucleiData.computeShapeFeatures(labeledMask);
-            nucleiData.computeRedBlueChannelTextureFeatures(thisTile, labeledMask);
-        }
-        std::vector<std::string> junFeatureNames = nucleiData.getFeatureNamesVector();
-        std::vector<std::vector<double> > junFeatureValues = nucleiData.getFeatureValuesVector();
-
-#endif
-        gettimeofday(&pe,NULL);
-
-        gettimeofday(&ws,NULL);
-
-// #pragma omp critical
-        {
-            // Write features
-            writeCombinedFeatureCSV(outPathPrefix.str(), inpParams, analysisParams.patchMinX, analysisParams.patchMinY,
-                                    yiFeatureNames, yiFeatureValues, junFeatureNames, junFeatureValues);
-            // Write analysis parameters
-            writeAnalysisParametersJSON(outPathPrefix.str(), &analysisParams);
-            writeAnalysisParametersCSV(outPathPrefix.str(), &analysisParams);
-        }
+		}
 
         gettimeofday(&we,NULL);
 
@@ -605,8 +568,7 @@ int segmentWSI(InputParameters *inpParams) {
         double wt = (double)((we.tv_sec * 1000000 + we.tv_usec) - (ws.tv_sec * 1000000 + ws.tv_usec));
 
         printf("TIME: %d (%d,%d) r: %lf p: %lf w: %lf\n",omp_get_thread_num(),(int)topLeftX,(int)topLeftY,rt/1000000.0,pt/1000000.0,wt/1000000.0);
-	fflush(stdout);
-
+		fflush(stdout);
     }
 
 #pragma omp barrier
@@ -693,25 +655,8 @@ int segmentImg(InputParameters *inpParams) {
         ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(overlay, oss.str().c_str(), 0);
     }
 
-#if 0
-    // Compute features
-    ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
-    featureAnalyzer.setInputRGBImage(thisTileItk);
-    featureAnalyzer.setObjectBinaryMask(nucleusBinaryMask);
-    featureAnalyzer.setTopLeft(analysisParams.patchMinX, analysisParams.patchMinY);
-    featureAnalyzer.update();
 
-    std::vector<std::vector<FeatureValueType> > features = featureAnalyzer.getFeatures();
-
-    writeFeatureCSV(outPathPrefix.str(), features);
-    writeAnalysisParametersJSON(outPathPrefix.str(), &analysisParams);
-    writeAnalysisParametersCSV(outPathPrefix.str(), &analysisParams);
-#endif
-
-#define yi_features
-#define jun_features
-#ifdef yi_features
-
+	// Compute Yi's features
     itkLabelImageType::Pointer labelImage = ImagenomicAnalytics::ScalarImage::binaryImageToConnectedComponentLabelImage<char>(
             nucleusBinaryMask);
 
@@ -719,16 +664,15 @@ int segmentImg(InputParameters *inpParams) {
     featureAnalyzer.setInputRGBImage(thisTileItk);
     featureAnalyzer.setObjectLabeledMask(labelImage);
     featureAnalyzer.setTopLeft(analysisParams.patchMinX, analysisParams.patchMinY);
+	featureAnalyzer.setMpp((double)analysisParams.mpp);
     featureAnalyzer.setFeatureNames();
     featureAnalyzer.update();
 
     std::vector<std::vector<FeatureValueType> > yiFeatureValues = featureAnalyzer.getFeatures();
     std::vector<std::string> yiFeatureNames = featureAnalyzer.getFeatureNames();
 
-#endif
 
-#ifdef jun_features
-
+	// Compute Jun's features
     ImageRegionNucleiData nucleiData(0, 0, thisTile.cols - 1, thisTile.rows - 1);
 
     Mat_<int> labeledMask = label2CvMat(labelImage);
@@ -752,14 +696,39 @@ int segmentImg(InputParameters *inpParams) {
     std::vector<std::string> junFeatureNames = nucleiData.getFeatureNamesVector();
     std::vector<std::vector<double> > junFeatureValues = nucleiData.getFeatureValuesVector();
 
-#endif
 
-    // Write features
-    writeCombinedFeatureCSV(outPathPrefix.str(), inpParams, analysisParams.patchMinX, analysisParams.patchMinY,
-                            yiFeatureNames, yiFeatureValues, junFeatureNames, junFeatureValues);
-    // Write analysis parameters
-    writeAnalysisParametersJSON(outPathPrefix.str(), &analysisParams);
-    writeAnalysisParametersCSV(outPathPrefix.str(), &analysisParams);
+	if (nucleiData.getNumberOfNuclei()>0) {
+
+    	// Write features
+    	writeCombinedFeatureCSV(outPathPrefix.str(), inpParams, analysisParams.patchMinX, analysisParams.patchMinY,
+       	                     yiFeatureNames, yiFeatureValues, junFeatureNames, junFeatureValues);
+    	// Write analysis parameters
+    	writeAnalysisParametersJSON(outPathPrefix.str(), &analysisParams);
+    	writeAnalysisParametersCSV(outPathPrefix.str(), &analysisParams);
+
+    	// Output original
+    	if (inpParams->outputLevel >= MASK_IMG) {
+			std::ostringstream oss;
+       	 	oss << outPathPrefix.str() << "-tile.jpg";
+       	 	ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(thisTileItk, oss.str().c_str(), 0);
+    	}
+
+    	// Output segmented mask
+    	if (inpParams->outputLevel >= MASK_ONLY) {
+       	 	std::ostringstream oss;
+       	 	oss << outPathPrefix.str() << "-seg.png";
+       	 	ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, oss.str().c_str(), 0);
+    	}
+
+    	// Output overlay
+    	if (inpParams->outputLevel >= MASK_IMG_OVERLAY) {
+       	 	std::ostringstream oss;
+       	 	oss << outPathPrefix.str() << "-overlay.jpg";
+       	 	itkRGBImageType::Pointer overlay = ImagenomicAnalytics::ScalarImage::generateSegmentationOverlay<char>(
+       	   			      thisTileItk, nucleusBinaryMask);
+       	 	ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(overlay, oss.str().c_str(), 0);
+    	}
+	}
 
     return 0;
 }
@@ -1036,23 +1005,10 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList) {
                 }
             }
 
-#if 0
-            // Compute features
-            ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
-            featureAnalyzer.setInputRGBImage(thisTileItk);
-            featureAnalyzer.setObjectBinaryMask(nucleusBinaryMask);
-            featureAnalyzer.setTopLeft(topLeftX, topLeftY);
-            featureAnalyzer.update();
-            std::vector<std::vector<FeatureValueType> > features = featureAnalyzer.getFeatures();
-#endif
-
             /**
              * Compute features
              */
-#define yi_features
-#define jun_features
-#ifdef yi_features
-
+			// Yi's features
             itkLabelImageType::Pointer labelImage = ImagenomicAnalytics::ScalarImage::binaryImageToConnectedComponentLabelImage<char>(
                     nucleusBinaryMask);
 
@@ -1060,16 +1016,14 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList) {
             featureAnalyzer.setInputRGBImage(thisTileItk);
             featureAnalyzer.setObjectLabeledMask(labelImage);
             featureAnalyzer.setTopLeft(analysisParams.patchMinX, analysisParams.patchMinY);
+			featureAnalyzer.setMpp((double)analysisParams.mpp);
             featureAnalyzer.setFeatureNames();
             featureAnalyzer.update();
 
             std::vector<std::vector<FeatureValueType> > yiFeatureValues = featureAnalyzer.getFeatures();
             std::vector<std::string> yiFeatureNames = featureAnalyzer.getFeatureNames();
 
-#endif
-
-#ifdef jun_features
-
+			// Jun's features
             ImageRegionNucleiData nucleiData(0, 0, thisTile.cols - 1, thisTile.rows - 1);
 
             Mat_<int> labeledMask = label2CvMat(labelImage);
@@ -1093,7 +1047,6 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList) {
             std::vector<std::string> junFeatureNames = nucleiData.getFeatureNamesVector();
             std::vector<std::vector<double> > junFeatureValues = nucleiData.getFeatureValuesVector();
 
-#endif
 
 #pragma omp critical
             {
@@ -1111,88 +1064,6 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList) {
 #pragma omp barrier
     return 0;
 }
-
-#if 0
-int segmentSingleTile(InputParameters *inpParams) {
-    std::string fileName = inpParams->inpFile;
-    std::string outPrefix = inpParams->outPrefix;
-    int64_t topLeftX = inpParams->topLeftX;
-    int64_t topLeftY = inpParams->topLeftY;
-    int64_t sizeX = inpParams->sizeX;
-    int64_t sizeY = inpParams->sizeY;
-
-    AnalysisParameters analysisParams;
-    captureAnalysisParameters(&analysisParams, inpParams);
-
-    openslide_t *osr = openslide_open(fileName.c_str());
-    if (osr == NULL) return 1;
-
-    analysisParams.mpp = ImagenomicAnalytics::WholeSlideProcessing::extractMPP<char>(osr);
-
-    int32_t levelOfLargestSize = 0; // 0-th level is the largest
-    int64_t w[1], h[1];
-    openslide_get_level_dimensions(osr, levelOfLargestSize, w, h);
-    if ((topLeftX + sizeX) > w[0] || (topLeftY + sizeY) > h[0]) {
-        std::cerr << "ERROR: Requested tile ("
-                  << topLeftX << "," << topLeftY << "," << topLeftX + sizeX << "," << topLeftY + sizeY
-                  << ") is out of bounds ("
-                  << w[0] << "," << h[0]
-                  << ") in image: " << fileName << std::endl;
-        return 1;
-    }
-
-    cv::Mat thisTile;
-    thisTile = ImagenomicAnalytics::WholeSlideProcessing::extractTileFromWSI<char>(osr, levelOfLargestSize,
-                                                                                   topLeftX, topLeftY, sizeX, sizeY);
-    openslide_close(osr);
-
-    itkRGBImageType::Pointer thisTileItk = itk::OpenCVImageBridge::CVMatToITKImage<itkRGBImageType>(thisTile);
-
-    itkUShortImageType::Pointer outputLabelImageUShort = itkUShortImageType::New();
-    itkUCharImageType::Pointer nucleusBinaryMask = ImagenomicAnalytics::TileAnalysis::processTile<char>(thisTile,
-                                                                                                        outputLabelImageUShort,
-                                                                                                        inpParams->otsuRatio,
-                                                                                                        inpParams->curvatureWeight,
-                                                                                                        inpParams->sizeLowerThld,
-                                                                                                        inpParams->sizeUpperThld,
-                                                                                                        inpParams->mpp,
-                                                                                                        inpParams->msKernel,
-                                                                                                        inpParams->levelsetNumberOfIteration);
-
-    if (inpParams->outputLevel >= MASK_IMG) {
-        std::ostringstream oss;
-        oss << inpParams->outPrefix << "_mpp_" << inpParams->mpp << "_x" << topLeftX << "_y" << topLeftY << "-tile.jpg";
-        ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(thisTileItk, oss.str().c_str(), 0);
-    }
-    if (inpParams->outputLevel >= MASK_ONLY) {
-        std::ostringstream oss;
-        oss << inpParams->outPrefix << "_mpp_" << inpParams->mpp << "_x" << topLeftX << "_y" << topLeftY
-            << "-seg.png"; // Mask tile
-        ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, oss.str().c_str(), 0);
-    }
-    if (inpParams->outputLevel >= MASK_IMG_OVERLAY) {
-        std::ostringstream oss;
-        oss << inpParams->outPrefix << "_mpp_" << inpParams->mpp << "_x" << topLeftX << "_y" << topLeftY
-            << "-overlay.jpg";
-        itkRGBImageType::Pointer overlay = ImagenomicAnalytics::ScalarImage::generateSegmentationOverlay<char>(
-                thisTileItk, nucleusBinaryMask);
-        ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(overlay, oss.str().c_str(), 0);
-    }
-
-    // Compute features
-    ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
-    featureAnalyzer.setInputRGBImage(thisTileItk);
-    featureAnalyzer.setObjectBinaryMask(nucleusBinaryMask);
-    featureAnalyzer.setTopLeft(topLeftX, topLeftY);
-    featureAnalyzer.update();
-    std::vector<std::vector<FeatureValueType> > features = featureAnalyzer.getFeatures();
-
-    writeFeatureCSV(inpParams->outPrefix, inpParams->mpp, topLeftX, topLeftY, features);
-    writeAnalysisParametersJSON(&analysisParams);
-
-    return 0;
-}
-#endif
 
 int main(int argc, char **argv) {
 
