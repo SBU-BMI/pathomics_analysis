@@ -101,7 +101,7 @@ namespace ImagenomicAnalytics
     m_featureNames.push_back("PrincipalMoments0");
     m_featureNames.push_back("PrincipalMoments1");
     m_featureNames.push_back("Elongation");
-    m_featureNames.push_back("Perimeter");
+    // m_featureNames.push_back("Perimeter");  // computed elsewhere
     m_featureNames.push_back("Roundness");
     m_featureNames.push_back("EquivalentSphericalRadius");
     m_featureNames.push_back("EquivalentSphericalPerimeter");
@@ -229,7 +229,7 @@ namespace ImagenomicAnalytics
         morphologyFeatures.push_back(labelObject->GetPrincipalMoments()[0]);
         morphologyFeatures.push_back(labelObject->GetPrincipalMoments()[1]);
         morphologyFeatures.push_back(labelObject->GetElongation());
-        morphologyFeatures.push_back(labelObject->GetPerimeter());
+        // morphologyFeatures.push_back(labelObject->GetPerimeter());
         morphologyFeatures.push_back(labelObject->GetRoundness());
         morphologyFeatures.push_back(labelObject->GetEquivalentSphericalRadius());
         morphologyFeatures.push_back(labelObject->GetEquivalentSphericalPerimeter());
