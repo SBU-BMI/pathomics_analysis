@@ -487,7 +487,7 @@ int segmentWSI(InputParameters *inpParams) {
                                                                                                             inpParams->declumpingType);
 
         // Compute features
-		// Yi's features
+	// Yi's features
         itkLabelImageType::Pointer labelImage = 
 					ImagenomicAnalytics::ScalarImage::binaryImageToConnectedComponentLabelImage<char>(nucleusBinaryMask);
 
@@ -495,14 +495,14 @@ int segmentWSI(InputParameters *inpParams) {
         featureAnalyzer.setInputRGBImage(thisTileItk);
         featureAnalyzer.setObjectLabeledMask(labelImage);
         featureAnalyzer.setTopLeft(analysisParams.patchMinX, analysisParams.patchMinY);
-		featureAnalyzer.setMpp((double)analysisParams.mpp);
+	featureAnalyzer.setMpp((double)analysisParams.mpp);
         featureAnalyzer.setFeatureNames();
         featureAnalyzer.update();
 
         std::vector<std::vector<FeatureValueType> > yiFeatureValues = featureAnalyzer.getFeatures();
         std::vector<std::string> yiFeatureNames = featureAnalyzer.getFeatureNames();
 
-		// Jun's features
+	// Jun's features
         ImageRegionNucleiData nucleiData(0, 0, thisTile.cols - 1, thisTile.rows - 1);
         Mat_<int> labeledMask = label2CvMat(labelImage);
         nucleiData.extractBoundingBoxesFromLabeledMask(labeledMask);
@@ -527,39 +527,39 @@ int segmentWSI(InputParameters *inpParams) {
         gettimeofday(&pe,NULL);
         gettimeofday(&ws,NULL);
 
-		// Output data if there are segmentation results
-		if (nucleiData.getNumberOfNuclei() > 0) {
+	// Output data if there are segmentation results
+	if (nucleiData.getNumberOfNuclei() > 0) {
            	// Write features
            	writeCombinedFeatureCSV(outPathPrefix.str(), inpParams, analysisParams.patchMinX, analysisParams.patchMinY,
-								yiFeatureNames, yiFeatureValues, junFeatureNames, junFeatureValues);
+					yiFeatureNames, yiFeatureValues, junFeatureNames, junFeatureValues);
            	// Write analysis parameters
            	writeAnalysisParametersJSON(outPathPrefix.str(), &analysisParams);
            	writeAnalysisParametersCSV(outPathPrefix.str(), &analysisParams);
 
-			// Write mask and overlay images
-            // Output original
-            if (inpParams->outputLevel >= MASK_IMG) {
-                std::ostringstream oss;
-                oss << outPathPrefix.str() << "-tile.jpg";
-                ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(thisTileItk, oss.str().c_str(), 0);
-            }
+		// Write mask and overlay images
+            	// Output original
+            	if (inpParams->outputLevel >= MASK_IMG) {
+                	std::ostringstream oss;
+                	oss << outPathPrefix.str() << "-tile.jpg";
+                	ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(thisTileItk, oss.str().c_str(), 0);
+            	}
 
-            // Output segmented mask
-            if (inpParams->outputLevel >= MASK_ONLY) {
-                std::ostringstream oss;
-                oss << outPathPrefix.str() << "-seg.png";
-                ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, oss.str().c_str(), 0);
-            }
+            	// Output segmented mask
+            	if (inpParams->outputLevel >= MASK_ONLY) {
+			std::ostringstream oss;
+                	oss << outPathPrefix.str() << "-seg.png";
+                	ImagenomicAnalytics::IO::writeImage<itkUCharImageType>(nucleusBinaryMask, oss.str().c_str(), 0);
+            	}
 
-            // Output overlay
-            if (inpParams->outputLevel >= MASK_IMG_OVERLAY) {
-                std::ostringstream oss;
-                oss << outPathPrefix.str() << "-overlay.jpg";
-                itkRGBImageType::Pointer overlay = ImagenomicAnalytics::ScalarImage::generateSegmentationOverlay<char>(
-                        thisTileItk, nucleusBinaryMask);
-                ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(overlay, oss.str().c_str(), 0);
-            }
-		}
+            	// Output overlay
+            	if (inpParams->outputLevel >= MASK_IMG_OVERLAY) {
+                	std::ostringstream oss;
+                	oss << outPathPrefix.str() << "-overlay.jpg";
+                	itkRGBImageType::Pointer overlay = ImagenomicAnalytics::ScalarImage::generateSegmentationOverlay<char>(
+                        	thisTileItk, nucleusBinaryMask);
+                	ImagenomicAnalytics::IO::writeImage<itkRGBImageType>(overlay, oss.str().c_str(), 0);
+            	}
+	}
 
         gettimeofday(&we,NULL);
 

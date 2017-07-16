@@ -12,15 +12,14 @@ COPY . /tmp/pathomics_analysis
 # Build
 RUN mkdir $BLD_DIR && cd $WORKDIR
 WORKDIR $BLD_DIR
-RUN cmake $SRC_DIR
-RUN make -j4
+RUN cmake $SRC_DIR && make -j4
 
 # Copy executables
-RUN cp app/main* /usr/local/bin/.
-RUN cp app/computeFeatures* /usr/local/bin/.
+RUN mv app/main* /usr/local/bin/. && \
+    mv app/computeFeatures* /usr/local/bin/. && \
+    mv ../script/mainAggregateFeatures.py  /usr/local/bin/. 
 
-# Copy script
-RUN cp ../script/mainAggregateFeatures.py  /usr/local/bin/.
+ENV ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1
 
 WORKDIR /tmp
 
