@@ -96,7 +96,7 @@ namespace ImagenomicAnalytics
     //m_featureNames.push_back("BoundingBoxBottomRightY");
     //m_featureNames.push_back("NumberOfPixels");
     m_featureNames.push_back("PhysicalSize");
-    //m_featureNames.push_back("NumberOfPixelsOnBorder");
+    m_featureNames.push_back("NumberOfPixelsOnBorder");
     //m_featureNames.push_back("FeretDiameter");
     m_featureNames.push_back("PrincipalMoments0");
     m_featureNames.push_back("PrincipalMoments1");
@@ -224,7 +224,7 @@ namespace ImagenomicAnalytics
         //morphologyFeatures.push_back(bottomRightY);
         //morphologyFeatures.push_back(labelObject->GetNumberOfPixels());
         morphologyFeatures.push_back(labelObject->GetPhysicalSize()*m_mpp*m_mpp); // GetPhysicalSize returns size in pixels
-        //morphologyFeatures.push_back(labelObject->GetNumberOfPixelsOnBorder());
+        morphologyFeatures.push_back(labelObject->GetNumberOfPixelsOnBorder());
         //morphologyFeatures.push_back(labelObject->GetFeretDiameter());
         morphologyFeatures.push_back(labelObject->GetPrincipalMoments()[0]);
         morphologyFeatures.push_back(labelObject->GetPrincipalMoments()[1]);
