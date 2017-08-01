@@ -907,7 +907,7 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList) {
         analysisParams.patchWidth = sizeX;
         analysisParams.patchHeight = sizeY;
 
-#pragma omp critical
+// #pragma omp critical
         {
             std::cout << "INPUT READING: " << fileName << " " << outPrefix << " "
                       << topLeftX << " " << topLeftY << " "
@@ -920,7 +920,7 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList) {
         char noErrors = 1;
         std::stringstream outFilePrefix;
         std::stringstream outPathPrefix;
-#pragma omp critical
+// #pragma omp critical
         {
             int64_t w[1], h[1];
             try {
@@ -979,7 +979,7 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList) {
                     inpParams->sizeUpperThld, mpp, inpParams->msKernel, inpParams->levelsetNumberOfIteration,
                     inpParams->declumpingType);
 
-#pragma omp critical
+// #pragma omp critical
             {
                 // Output original
                 if (inpParams->outputLevel >= MASK_IMG) {
@@ -1048,7 +1048,7 @@ int segmentTiles(InputParameters *inpParams, PatchList *patchList) {
             std::vector<std::vector<double> > junFeatureValues = nucleiData.getFeatureValuesVector();
 
 
-#pragma omp critical
+// #pragma omp critical
             {
                 // Write features
                 writeCombinedFeatureCSV(outPathPrefix.str(), inpParams, analysisParams.patchMinX,
