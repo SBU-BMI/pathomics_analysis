@@ -145,6 +145,7 @@ namespace ImagenomicAnalytics {
             featureAnalyzer.setInputRGBImage(thisObjectRGB);
             featureAnalyzer.setInputMask(thisObjectMask);
             featureAnalyzer.setTopLeft(m_TopLeftX + x0, m_TopLeftY + y0);
+            featureAnalyzer.setMpp(m_mpp);
             featureAnalyzer.update();
 
             m_featuresOfAllObjects[it] = featureAnalyzer.getFeatures();

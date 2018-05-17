@@ -134,24 +134,18 @@ int main(int argc, char *argv[]) {
     // Convert image to ITK image.
     itkRGBImageType::Pointer thisTileItk = itk::OpenCVImageBridge::CVMatToITKImage<itkRGBImageType>(thisTile);
 
-#define yi_features
-#define jun_features
-#ifdef yi_features
-
+	// Compute Yi's features
     ImagenomicAnalytics::MultipleObjectFeatureAnalysisFilter featureAnalyzer;
     featureAnalyzer.setInputRGBImage(thisTileItk);
     featureAnalyzer.setObjectLabeledMask(labelImage);
-    featureAnalyzer.setTopLeft(0,0);
+    featureAnalyzer.setTopLeft(x,y);
     featureAnalyzer.setFeatureNames();
     featureAnalyzer.update();
 
     std::vector<std::vector<FeatureValueType> > yiFeatureValues = featureAnalyzer.getFeatures();
     std::vector<std::string> yiFeatureNames = featureAnalyzer.getFeatureNames();
 
-#endif
-
-#ifdef jun_features
-
+	// Compute Jun's features
     ImageRegionNucleiData nucleiData(0, 0, thisTile.cols - 1, thisTile.rows - 1);
 
     Mat_<int> labeledMask = label2CvMat(labelImage);
@@ -164,7 +158,7 @@ int main(int argc, char *argv[]) {
         exit(-1);
     }
 
-    cout << "COMP COUNT: " << nucleiData.getNumberOfNuclei() << endl;
+    // cout << "COMP COUNT: " << nucleiData.getNumberOfNuclei() << endl;
 
     if (nucleiData.getNumberOfNuclei() > 0) {
         nucleiData.extractPolygonsFromLabeledMask(labeledMask);
@@ -175,26 +169,8 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> junFeatureNames = nucleiData.getFeatureNamesVector();
     std::vector<std::vector<double> > junFeatureValues = nucleiData.getFeatureValuesVector();
 
-#endif
-
     // Write features
-    writeCombinedComputedFeaturesCSV(output, 0, 0, yiFeatureNames, yiFeatureValues, junFeatureNames, junFeatureValues);
-
-#if 0 
-    string var0 = (string) pgm;
-    char p = var0[0];
-
-    switch (p) {
-        case 'Y':
-            computeWriteYiFeatures(tile, m_objectLabelImage, output, x, y);
-            break;
-        case 'J':
-            computeWriteJunFeatures(tile, m_objectLabelImage, output);
-            break;
-        default:
-            cout << "Which program to run?  Next time type Y for Yi's, or J for Jun's." << endl;
-    }
-#endif
+    writeCombinedComputedFeaturesCSV(output, x, y, yiFeatureNames, yiFeatureValues, junFeatureNames, junFeatureValues);
 
     return EXIT_SUCCESS;
 }

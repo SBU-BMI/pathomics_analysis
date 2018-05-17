@@ -46,6 +46,10 @@ namespace ImagenomicAnalytics {
             m_TopLeftY = y;
         }
 
+        void setMpp(double mpp_val) {
+			m_mpp = mpp_val;
+		}
+
         void setObjectLabeledMask(itkLabelImageType::Pointer labeledMask) {
             m_objectLabelImage = labeledMask;
             m_labelComputed = 1;
@@ -100,6 +104,7 @@ namespace ImagenomicAnalytics {
         itkBinaryMaskImageType::Pointer m_binaryObjectMask;
         int64_t m_TopLeftX; // the x of the top left corner of this tile in the WSI, in index (pixel) space
         int64_t m_TopLeftY;
+		double m_mpp;
         ///================================================================================
 
         int m_labelComputed;

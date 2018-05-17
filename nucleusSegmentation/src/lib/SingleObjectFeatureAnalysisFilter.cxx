@@ -94,14 +94,14 @@ namespace ImagenomicAnalytics
     //m_featureNames.push_back("BoundingBoxTopLeftY");
     //m_featureNames.push_back("BoundingBoxBottomRightX");
     //m_featureNames.push_back("BoundingBoxBottomRightY");
-    m_featureNames.push_back("NumberOfPixels");
+    //m_featureNames.push_back("NumberOfPixels");
     m_featureNames.push_back("PhysicalSize");
     m_featureNames.push_back("NumberOfPixelsOnBorder");
-    m_featureNames.push_back("FeretDiameter");
+    //m_featureNames.push_back("FeretDiameter");
     m_featureNames.push_back("PrincipalMoments0");
     m_featureNames.push_back("PrincipalMoments1");
     m_featureNames.push_back("Elongation");
-    m_featureNames.push_back("Perimeter");
+    // m_featureNames.push_back("Perimeter");  // computed elsewhere
     m_featureNames.push_back("Roundness");
     m_featureNames.push_back("EquivalentSphericalRadius");
     m_featureNames.push_back("EquivalentSphericalPerimeter");
@@ -222,14 +222,14 @@ namespace ImagenomicAnalytics
         //morphologyFeatures.push_back(topLeftY);
         //morphologyFeatures.push_back(bottomRightX);
         //morphologyFeatures.push_back(bottomRightY);
-        morphologyFeatures.push_back(labelObject->GetNumberOfPixels());
-        morphologyFeatures.push_back(labelObject->GetPhysicalSize());
+        //morphologyFeatures.push_back(labelObject->GetNumberOfPixels());
+        morphologyFeatures.push_back(labelObject->GetPhysicalSize()*m_mpp*m_mpp); // GetPhysicalSize returns size in pixels
         morphologyFeatures.push_back(labelObject->GetNumberOfPixelsOnBorder());
-        morphologyFeatures.push_back(labelObject->GetFeretDiameter());
+        //morphologyFeatures.push_back(labelObject->GetFeretDiameter());
         morphologyFeatures.push_back(labelObject->GetPrincipalMoments()[0]);
         morphologyFeatures.push_back(labelObject->GetPrincipalMoments()[1]);
         morphologyFeatures.push_back(labelObject->GetElongation());
-        morphologyFeatures.push_back(labelObject->GetPerimeter());
+        // morphologyFeatures.push_back(labelObject->GetPerimeter());
         morphologyFeatures.push_back(labelObject->GetRoundness());
         morphologyFeatures.push_back(labelObject->GetEquivalentSphericalRadius());
         morphologyFeatures.push_back(labelObject->GetEquivalentSphericalPerimeter());

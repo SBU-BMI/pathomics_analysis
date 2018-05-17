@@ -52,6 +52,7 @@ namespace ImagenomicAnalytics
     void setInputMask(itkLabelImageType::Pointer inputMask);
 
     void setTopLeft(int64_t x, int64_t y) {m_TopLeftX = x; m_TopLeftY = y;}
+	void setMpp(double mpp_val) { m_mpp = mpp_val; }
 
     void update();
     ///================================================================================
@@ -78,6 +79,7 @@ namespace ImagenomicAnalytics
     itkRGBImageType::Pointer m_RGBImage;
     int64_t m_TopLeftX; // the x of the top left cornor of this tile in the WSI, in index (pixel) space
     int64_t m_TopLeftY;
+    double  m_mpp;
 
     int m_numberOfFeatures;
     ///================================================================================
